@@ -20,6 +20,7 @@ func Write(dst io.Writer, persons []xone.Person) error {
 			person.FirstName,
 			person.LastName,
 			person.DateOfBirth.Format(xone.FormatDateOfBirth),
+			person.Gender.String(),
 		})
 
 		if err != nil {
@@ -64,10 +65,16 @@ func Parse(src io.Reader) ([]xone.Person, error) {
 			return nil, fmt.Errorf("%s is not a valid date of birth", record[2])
 		}
 
+		gender, err := xone.ParseGender(record[3])
+		if err != nil {
+			return nil, err
+		}
+
 		persons = append(persons, xone.Person{
 			FirstName:   record[0],
 			LastName:    record[1],
 			DateOfBirth: dob,
+			Gender:      gender,
 		})
 	}
 
@@ -87,7 +94,7 @@ func ParseFile(file string) ([]xone.Person, error) {
 func getDefaultReader(src io.Reader) *csv.Reader {
 	reader := csv.NewReader(src)
 	reader.TrimLeadingSpace = true
-	reader.FieldsPerRecord = 3
+	reader.FieldsPerRecord = 4
 
 	return reader
 }
