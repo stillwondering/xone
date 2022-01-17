@@ -11,7 +11,7 @@ import (
 	"github.com/stillwondering/xone"
 )
 
-func TestEncode(t *testing.T) {
+func TestWrite(t *testing.T) {
 	type args struct {
 		persons []xone.Person
 	}
@@ -55,18 +55,18 @@ func TestEncode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dst := &bytes.Buffer{}
-			if err := Encode(dst, tt.args.persons); (err != nil) != tt.wantErr {
-				t.Errorf("Encode() error = %v, wantErr %v", err, tt.wantErr)
+			if err := Write(dst, tt.args.persons); (err != nil) != tt.wantErr {
+				t.Errorf("Write() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if gotDst := dst.String(); gotDst != tt.wantDst {
-				t.Errorf("Encode() = %v, want %v", gotDst, tt.wantDst)
+				t.Errorf("Write() = %v, want %v", gotDst, tt.wantDst)
 			}
 		})
 	}
 }
 
-func TestDecode(t *testing.T) {
+func TestParse(t *testing.T) {
 	type args struct {
 		src io.Reader
 	}
@@ -125,13 +125,13 @@ func TestDecode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Decode(tt.args.src)
+			got, err := Parse(tt.args.src)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Decode() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Decode() = %v, want %v", got, tt.want)
+				t.Errorf("Parse() = %v, want %v", got, tt.want)
 			}
 		})
 	}

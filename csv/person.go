@@ -10,7 +10,7 @@ import (
 	"github.com/stillwondering/xone"
 )
 
-func Encode(dst io.Writer, persons []xone.Person) error {
+func Write(dst io.Writer, persons []xone.Person) error {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
@@ -33,7 +33,7 @@ func Encode(dst io.Writer, persons []xone.Person) error {
 	return err
 }
 
-func Decode(src io.Reader) ([]xone.Person, error) {
+func Parse(src io.Reader) ([]xone.Person, error) {
 	reader := getDefaultReader(src)
 
 	var persons []xone.Person
