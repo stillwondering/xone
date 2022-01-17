@@ -40,3 +40,9 @@ type Person struct {
 	DateOfBirth time.Time
 	Gender      Gender
 }
+
+// PersonRepository is used for structs that can be used to manage a collection
+// of Person objects.
+type PersonRepository interface {
+	GetAll() ([]Person, error)
+}

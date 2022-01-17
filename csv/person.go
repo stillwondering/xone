@@ -11,6 +11,35 @@ import (
 	"github.com/stillwondering/xone"
 )
 
+var _ xone.PersonRepository = (*PersonRepository)(nil)
+
+type PersonRepository struct {
+	file string
+}
+
+func NewPersonRepository(filename string) (*PersonRepository, error) {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		file, err := os.Create(filename)
+		if err != nil {
+			return nil, err
+		}
+		file.Close()
+
+		return &PersonRepository{file: filename}, nil
+	}
+
+	if info.IsDir() {
+		return nil, fmt.Errorf("%s is a directory", filename)
+	}
+
+	return &PersonRepository{file: filename}, nil
+}
+
+func (r *PersonRepository) GetAll() ([]xone.Person, error) {
+	return ParseFile(r.file)
+}
+
 func Write(dst io.Writer, persons []xone.Person) error {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)

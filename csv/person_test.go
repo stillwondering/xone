@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
+	"os"
 	"path"
 	"reflect"
 	"strings"
@@ -259,4 +260,104 @@ func areContentsEqual(t *testing.T, expected, actual string) bool {
 	}
 
 	return bytes.Equal(expectedContent, actualContent)
+}
+
+func TestNewPersonRepository(t *testing.T) {
+	dir := t.TempDir()
+
+	type args struct {
+		filename string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *PersonRepository
+		wantErr bool
+	}{
+		{
+			name:    "Directory",
+			args:    args{filename: dir},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "NonexistentFile",
+			args:    args{filename: path.Join(dir, "NonexistentFile.csv")},
+			want:    &PersonRepository{file: path.Join(dir, "NonexistentFile.csv")},
+			wantErr: false,
+		},
+		{
+			name:    "ExistingFile",
+			args:    args{filename: "testdata/EmptyFile.csv"},
+			want:    &PersonRepository{file: "testdata/EmptyFile.csv"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewPersonRepository(tt.args.filename)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewPersonRepository() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewPersonRepository() = %v, want %v", got, tt.want)
+			}
+
+			if tt.want != nil {
+				_, err = os.Stat(tt.args.filename)
+				if err != nil {
+					if os.IsNotExist(err) {
+						t.Errorf("file %s should exist", tt.args.filename)
+					} else {
+						t.Fatal(err)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestPersonRepository_GetAll(t *testing.T) {
+	type fields struct {
+		file string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []xone.Person
+		wantErr bool
+	}{
+		{
+			name:    "EmptyFile",
+			fields:  fields{file: "testdata/EmptyFile.csv"},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name:   "MultiplePeople",
+			fields: fields{file: "testdata/MultiplePeople.csv"},
+			want: []xone.Person{
+				{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31"), Gender: xone.Male},
+				{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01"), Gender: xone.Male},
+				{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19"), Gender: xone.Female},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &PersonRepository{
+				file: tt.fields.file,
+			}
+			got, err := r.GetAll()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("PersonRepository.GetAll() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("PersonRepository.GetAll() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
