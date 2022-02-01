@@ -41,3 +41,12 @@ type Person struct {
 	DateOfBirth time.Time
 	Gender      Gender
 }
+
+// CreatePersonData contains all data which is necessary to create a new Person entry
+// in any kind of repository.
+type CreatePersonData struct {
+	FirstName   string
+	LastName    string
+	DateOfBirth time.Time
+	Gender      Gender
+}

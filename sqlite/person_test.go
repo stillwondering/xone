@@ -85,6 +85,70 @@ func Test_findPersons(t *testing.T) {
 	}
 }
 
+func Test_createPerson(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		testfile string
+		data     xone.CreatePersonData
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    xone.Person
+		wantErr bool
+	}{
+		{
+			name: "Empty database",
+			args: args{
+				ctx: context.Background(),
+				data: xone.CreatePersonData{
+					FirstName:   "Harry",
+					LastName:    "Potter",
+					DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
+					Gender:      xone.Male,
+				},
+			},
+			want:    persons[0],
+			wantErr: false,
+		},
+		{
+			name: "Filled database",
+			args: args{
+				ctx:      context.Background(),
+				testfile: "testdata/Test_createPerson_prefill.sql",
+				data: xone.CreatePersonData{
+					FirstName:   "Hermione",
+					LastName:    "Granger",
+					DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
+					Gender:      xone.Female,
+				},
+			},
+			want:    persons[2],
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := mustOpenDB(t)
+			defer mustCloseDB(t, db)
+
+			if tt.args.testfile != "" {
+				mustExecuteSQL(t, db, tt.args.testfile)
+			}
+			tx := mustBeginTx(t, db, tt.args.ctx)
+
+			got, err := createPerson(tt.args.ctx, tx, tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("createPerson() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("createPerson() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_parseDateOfBirth(t *testing.T) {
 	type args struct {
 		s string

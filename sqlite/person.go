@@ -35,6 +35,21 @@ func (ps *PersonService) FindAll(ctx context.Context) ([]xone.Person, error) {
 	return persons, tx.Commit()
 }
 
+func (ps *PersonService) Create(ctx context.Context, data xone.CreatePersonData) (xone.Person, error) {
+	tx, err := ps.db.BeginTx(ctx, nil)
+	if err != nil {
+		return xone.Person{}, err
+	}
+	defer tx.Rollback()
+
+	person, err := createPerson(ctx, tx, data)
+	if err != nil {
+		return xone.Person{}, err
+	}
+
+	return person, tx.Commit()
+}
+
 func findPersons(ctx context.Context, tx *Tx) ([]xone.Person, error) {
 	rows, err := tx.QueryContext(ctx, `
 		SELECT
@@ -82,6 +97,51 @@ func findPersons(ctx context.Context, tx *Tx) ([]xone.Person, error) {
 	return persons, nil
 }
 
+func createPerson(ctx context.Context, tx *Tx, data xone.CreatePersonData) (xone.Person, error) {
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO person (
+			first_name,
+			last_name,
+			date_of_birth,
+			gender
+		) VALUES (
+			?,
+			?,
+			?,
+			?
+		)
+	`)
+	if err != nil {
+		return xone.Person{}, err
+	}
+
+	result, err := stmt.ExecContext(
+		ctx,
+		data.FirstName,
+		data.LastName,
+		data.DateOfBirth.Format(xone.FormatDateOfBirth),
+		formatGender(data.Gender),
+	)
+	if err != nil {
+		return xone.Person{}, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return xone.Person{}, err
+	}
+
+	p := xone.Person{
+		ID:          int(id),
+		FirstName:   data.FirstName,
+		LastName:    data.LastName,
+		DateOfBirth: data.DateOfBirth,
+		Gender:      data.Gender,
+	}
+
+	return p, nil
+}
+
 func parseDateOfBirth(s string) (time.Time, error) {
 	return time.Parse(xone.FormatDateOfBirth, s)
 }
@@ -99,4 +159,14 @@ func parseGender(s string) (xone.Gender, error) {
 	}
 
 	return g, nil
+}
+
+func formatGender(g xone.Gender) string {
+	genders := map[xone.Gender]string{
+		xone.Female: "f",
+		xone.Male:   "m",
+		xone.Other:  "o",
+	}
+
+	return genders[g]
 }
