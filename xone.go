@@ -33,11 +33,9 @@ func ParseGender(s string) (Gender, error) {
 	return gender, nil
 }
 
-type PersonID string
-
 // Person contains the personal data of a organization member.
 type Person struct {
-	PID         PersonID
+	ID          int
 	FirstName   string
 	LastName    string
 	DateOfBirth time.Time

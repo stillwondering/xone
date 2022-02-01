@@ -12,21 +12,21 @@ import (
 
 var persons = []xone.Person{
 	{
-		PID:         "1",
+		ID:          1,
 		FirstName:   "Harry",
 		LastName:    "Potter",
 		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
 		Gender:      xone.Male,
 	},
 	{
-		PID:         "2",
+		ID:          2,
 		FirstName:   "Ron",
 		LastName:    "Weasley",
 		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
 		Gender:      xone.Male,
 	},
 	{
-		PID:         "3",
+		ID:          3,
 		FirstName:   "Hermione",
 		LastName:    "Granger",
 		DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),

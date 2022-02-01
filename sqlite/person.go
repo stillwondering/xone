@@ -39,7 +39,6 @@ func findPersons(ctx context.Context, tx *Tx) ([]xone.Person, error) {
 	rows, err := tx.QueryContext(ctx, `
 		SELECT
 			id,
-			pid,
 			first_name,
 			last_name,
 			date_of_birth,
@@ -54,14 +53,14 @@ func findPersons(ctx context.Context, tx *Tx) ([]xone.Person, error) {
 
 	var persons []xone.Person
 	var id int
-	var pid, firstName, lastName, dobString, genderString string
+	var firstName, lastName, dobString, genderString string
 	for rows.Next() {
-		if err := rows.Scan(&id, &pid, &firstName, &lastName, &dobString, &genderString); err != nil {
+		if err := rows.Scan(&id, &firstName, &lastName, &dobString, &genderString); err != nil {
 			return nil, err
 		}
 
 		p := xone.Person{
-			PID:       xone.PersonID(pid),
+			ID:        id,
 			FirstName: firstName,
 			LastName:  lastName,
 		}
