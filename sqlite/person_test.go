@@ -85,6 +85,66 @@ func Test_findPersons(t *testing.T) {
 	}
 }
 
+func Test_findPerson(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		testfile string
+		id       int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    xone.Person
+		found   bool
+		wantErr bool
+	}{
+		{
+			name: "Empty database",
+			args: args{
+				ctx: context.Background(),
+				id:  5,
+			},
+			want:    xone.Person{},
+			found:   false,
+			wantErr: false,
+		},
+		{
+			name: "Filled database",
+			args: args{
+				ctx:      context.Background(),
+				testfile: "testdata/Test_findPersons_multiple-people.sql",
+				id:       1,
+			},
+			want:    persons[0],
+			found:   true,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := mustOpenDB(t)
+			defer mustCloseDB(t, db)
+
+			if tt.args.testfile != "" {
+				mustExecuteSQL(t, db, tt.args.testfile)
+			}
+			tx := mustBeginTx(t, db, tt.args.ctx)
+
+			got, found, err := findPerson(tt.args.ctx, tx, tt.args.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("findPerson() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if found != tt.found {
+				t.Errorf("findPerson() found = %v, want %v", found, tt.found)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("findPerson() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_createPerson(t *testing.T) {
 	type args struct {
 		ctx      context.Context

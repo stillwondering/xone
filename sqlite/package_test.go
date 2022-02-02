@@ -94,4 +94,28 @@ func Test_PersonService_FindAll(t *testing.T) {
 	if !reflect.DeepEqual(expected, persons) {
 		t.Errorf("findAll() persons = %v, want %v", persons, expected)
 	}
+
+	person, found, err := service.Find(context.Background(), 2)
+	if err != nil {
+		t.Errorf("find() error = %v, wantErr nil", err)
+	}
+	if found {
+		t.Errorf("find() found = %v, want false", found)
+	}
+	expectedPerson := xone.Person{}
+	if person != expectedPerson {
+		t.Errorf("find() person = %v, want %v", person, expectedPerson)
+	}
+
+	person, found, err = service.Find(context.Background(), 1)
+	if err != nil {
+		t.Errorf("find() error = %v, wantErr nil", err)
+	}
+	if !found {
+		t.Errorf("find() found = %v, want true", found)
+	}
+	expectedPerson = examplePersons[0]
+	if person != expectedPerson {
+		t.Errorf("find() person = %v, want %v", person, expectedPerson)
+	}
 }

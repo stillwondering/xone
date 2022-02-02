@@ -35,6 +35,21 @@ func (ps *PersonService) FindAll(ctx context.Context) ([]xone.Person, error) {
 	return persons, tx.Commit()
 }
 
+func (ps *PersonService) Find(ctx context.Context, id int) (xone.Person, bool, error) {
+	tx, err := ps.db.BeginTx(ctx, nil)
+	if err != nil {
+		return xone.Person{}, false, err
+	}
+	defer tx.Rollback()
+
+	person, found, err := findPerson(ctx, tx, id)
+	if err != nil {
+		return xone.Person{}, false, err
+	}
+
+	return person, found, tx.Commit()
+}
+
 func (ps *PersonService) Create(ctx context.Context, data xone.CreatePersonData) (xone.Person, error) {
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -109,6 +124,60 @@ func findPersons(ctx context.Context, tx *Tx) ([]xone.Person, error) {
 	}
 
 	return persons, nil
+}
+
+func findPerson(ctx context.Context, tx *Tx, id int) (xone.Person, bool, error) {
+	stmt, err := tx.PrepareContext(ctx, `
+		SELECT
+			first_name,
+			last_name,
+			date_of_birth,
+			gender
+		FROM
+			person
+		WHERE
+			id = ?
+	`)
+	if err != nil {
+		return xone.Person{}, false, err
+	}
+
+	rows, err := stmt.QueryContext(ctx, id)
+	if err != nil {
+		return xone.Person{}, false, err
+	}
+	defer rows.Close()
+
+	p := xone.Person{}
+	found := false
+	for rows.Next() {
+		var firstName, lastName, dobString, genderString string
+
+		if err := rows.Scan(&firstName, &lastName, &dobString, &genderString); err != nil {
+			return xone.Person{}, false, err
+		}
+
+		p = xone.Person{
+			ID:        id,
+			FirstName: firstName,
+			LastName:  lastName,
+		}
+
+		if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
+			return xone.Person{}, false, err
+		}
+
+		if p.Gender, err = parseGender(genderString); err != nil {
+			return xone.Person{}, false, err
+		}
+
+		found = true
+	}
+	if err := rows.Err(); err != nil {
+		return xone.Person{}, false, err
+	}
+
+	return p, found, nil
 }
 
 func createPerson(ctx context.Context, tx *Tx, data xone.CreatePersonData) (xone.Person, error) {
