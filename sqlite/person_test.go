@@ -149,6 +149,54 @@ func Test_createPerson(t *testing.T) {
 	}
 }
 
+func Test_deletePerson(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		testfile string
+		id       int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Empty database",
+			args: args{
+				ctx: context.Background(),
+				id:  1,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Filled database",
+			args: args{
+				ctx:      context.Background(),
+				testfile: "testdata/Test_deletePerson_prefill.sql",
+				id:       1,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := mustOpenDB(t)
+			defer mustCloseDB(t, db)
+
+			if tt.args.testfile != "" {
+				mustExecuteSQL(t, db, tt.args.testfile)
+			}
+			tx := mustBeginTx(t, db, tt.args.ctx)
+
+			err := deletePerson(tt.args.ctx, tx, tt.args.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("createPerson() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
 func Test_parseDateOfBirth(t *testing.T) {
 	type args struct {
 		s string

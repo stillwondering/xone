@@ -2,6 +2,7 @@ package sqlite_test
 
 import (
 	"context"
+	"reflect"
 	"testing"
 	"time"
 
@@ -65,5 +66,32 @@ func Test_PersonService_FindAll(t *testing.T) {
 	}
 	if person != examplePersons[0] {
 		t.Errorf("Create() person = %v, want %v", person, examplePersons[0])
+	}
+
+	person, err = service.Create(context.Background(), xone.CreatePersonData{
+		FirstName:   "Ron",
+		LastName:    "Weasley",
+		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
+		Gender:      xone.Male,
+	})
+	if err != nil {
+		t.Errorf("Create() error =%v, wantErr nil", err)
+	}
+	if person != examplePersons[1] {
+		t.Errorf("Create() person = %v, want %v", person, examplePersons[1])
+	}
+
+	err = service.Delete(context.Background(), 2)
+	if err != nil {
+		t.Errorf("Delete() error =%v, wantErr nil", err)
+	}
+
+	persons, err = service.FindAll(context.Background())
+	if err != nil {
+		t.Errorf("findAll() error = %v, wantErr nil", err)
+	}
+	expected := []xone.Person{examplePersons[0]}
+	if !reflect.DeepEqual(expected, persons) {
+		t.Errorf("findAll() persons = %v, want %v", persons, expected)
 	}
 }

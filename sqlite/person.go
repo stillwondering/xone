@@ -50,6 +50,20 @@ func (ps *PersonService) Create(ctx context.Context, data xone.CreatePersonData)
 	return person, tx.Commit()
 }
 
+func (ps *PersonService) Delete(ctx context.Context, id int) error {
+	tx, err := ps.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if err := deletePerson(ctx, tx, id); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func findPersons(ctx context.Context, tx *Tx) ([]xone.Person, error) {
 	rows, err := tx.QueryContext(ctx, `
 		SELECT
@@ -140,6 +154,22 @@ func createPerson(ctx context.Context, tx *Tx, data xone.CreatePersonData) (xone
 	}
 
 	return p, nil
+}
+
+func deletePerson(ctx context.Context, tx *Tx, id int) error {
+	stmt, err := tx.PrepareContext(ctx, `
+		DELETE FROM
+			person
+		WHERE
+			id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.ExecContext(ctx, id)
+
+	return err
 }
 
 func parseDateOfBirth(s string) (time.Time, error) {
