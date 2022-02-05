@@ -50,3 +50,8 @@ type CreatePersonData struct {
 	DateOfBirth time.Time
 	Gender      Gender
 }
+
+type User struct {
+	Email    string
+	Password string
+}

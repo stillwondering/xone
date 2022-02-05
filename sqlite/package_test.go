@@ -119,3 +119,31 @@ func Test_PersonService_FindAll(t *testing.T) {
 		t.Errorf("find() person = %v, want %v", person, expectedPerson)
 	}
 }
+
+func Test_NewUserService(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	_, err := sqlite.NewUserService(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestUserService(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	userService, err := sqlite.NewUserService(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, found, err := userService.FindByEmail(context.Background(), "albus.dumbledore@hogwarts.co.uk")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found != false {
+		t.Errorf("UserService.FindByEmail() gotFound = %v, want %v", found, false)
+	}
+}

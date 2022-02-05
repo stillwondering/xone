@@ -5,3 +5,9 @@ CREATE TABLE `person` (
     `date_of_birth` TEXT NOT NULL,
     `gender` TEXT NOT NULL
 );
+
+CREATE TABLE `users` (
+    `id` INTEGER NOT NULL PRIMARY KEY,
+    `email` TEXT NOT NULL UNIQUE,
+    `password` TEXT NOT NULL
+);
