@@ -2,6 +2,7 @@ package sqlite_test
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 	"time"
@@ -145,5 +146,26 @@ func TestUserService(t *testing.T) {
 	}
 	if found != false {
 		t.Errorf("UserService.FindByEmail() gotFound = %v, want %v", found, false)
+	}
+
+	user, err := userService.Create(context.Background(), xone.CreateUserData{
+		Email:    "albus.dumbledore@hogwarts.co.uk",
+		Password: "Harrydidyouputyournameinthegobletoffire",
+	})
+	if err != nil {
+		t.Errorf("UserService.Create() err = %v, want %v", err, nil)
+	}
+	wantUser := xone.User{Email: "albus.dumbledore@hogwarts.co.uk", Password: "Harrydidyouputyournameinthegobletoffire"}
+	if user != wantUser {
+		t.Errorf("UserService.Create() want = %v, got %v", wantUser, user)
+	}
+
+	_, err = userService.Create(context.Background(), xone.CreateUserData{
+		Email:    "albus.dumbledore@hogwarts.co.uk",
+		Password: "A different password",
+	})
+	var e *xone.ErrUserExists
+	if !errors.As(err, &e) {
+		t.Errorf("UserService.Create() wantErr = %v, got %v", e, err)
 	}
 }

@@ -35,6 +35,27 @@ func (us *UserService) FindByEmail(ctx context.Context, email string) (xone.User
 	return user, found, tx.Commit()
 }
 
+func (us *UserService) Create(ctx context.Context, data xone.CreateUserData) (xone.User, error) {
+	tx, err := us.db.BeginTx(ctx, nil)
+	if err != nil {
+		return xone.User{}, err
+	}
+	defer tx.Rollback()
+
+	if _, found, err := findUserByEmail(ctx, tx, data.Email); err != nil {
+		return xone.User{}, err
+	} else if found {
+		return xone.User{}, &xone.ErrUserExists{Data: data}
+	}
+
+	user, err := createUser(ctx, tx, data)
+	if err != nil {
+		return xone.User{}, err
+	}
+
+	return user, tx.Commit()
+}
+
 func findUserByEmail(ctx context.Context, tx *Tx, email string) (xone.User, bool, error) {
 	stmt, err := tx.PrepareContext(ctx, `
 		SELECT
@@ -60,4 +81,26 @@ func findUserByEmail(ctx context.Context, tx *Tx, email string) (xone.User, bool
 	}
 
 	return user, true, nil
+}
+
+func createUser(ctx context.Context, tx *Tx, data xone.CreateUserData) (xone.User, error) {
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO users (
+			email,
+			password
+		) VALUES (
+			?,
+			?
+		)
+	`)
+	if err != nil {
+		return xone.User{}, err
+	}
+
+	_, err = stmt.ExecContext(ctx, data.Email, data.Password)
+	if err != nil {
+		return xone.User{}, err
+	}
+
+	return xone.User(data), nil
 }
