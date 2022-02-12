@@ -36,6 +36,7 @@ func ParseGender(s string) (Gender, error) {
 // Person contains the personal data of a organization member.
 type Person struct {
 	ID          int
+	PID         string
 	FirstName   string
 	LastName    string
 	DateOfBirth time.Time

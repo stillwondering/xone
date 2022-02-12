@@ -1,12 +1,14 @@
 package xone
 
-import "context"
+import (
+	"context"
+)
 
 type PersonRepository interface {
 	FindAll(context.Context) ([]Person, error)
-	Find(context.Context, int) (Person, bool, error)
+	Find(context.Context, string) (Person, bool, error)
 	Create(context.Context, CreatePersonData) (Person, error)
-	Delete(context.Context, int) error
+	Delete(context.Context, string) error
 }
 
 type UserService interface {

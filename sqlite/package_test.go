@@ -3,7 +3,6 @@ package sqlite_test
 import (
 	"context"
 	"errors"
-	"reflect"
 	"testing"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 var examplePersons = []xone.Person{
 	{
 		ID:          1,
+		PID:         "1",
 		FirstName:   "Harry",
 		LastName:    "Potter",
 		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
@@ -21,6 +21,7 @@ var examplePersons = []xone.Person{
 	},
 	{
 		ID:          2,
+		PID:         "2",
 		FirstName:   "Ron",
 		LastName:    "Weasley",
 		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
@@ -28,6 +29,7 @@ var examplePersons = []xone.Person{
 	},
 	{
 		ID:          3,
+		PID:         "3",
 		FirstName:   "Hermione",
 		LastName:    "Granger",
 		DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
@@ -65,9 +67,9 @@ func Test_PersonService_FindAll(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create() error =%v, wantErr nil", err)
 	}
-	if person != examplePersons[0] {
-		t.Errorf("Create() person = %v, want %v", person, examplePersons[0])
-	}
+	AssertEquals(t, examplePersons[0], person)
+
+	pid1 := person.PID
 
 	person, err = service.Create(context.Background(), xone.CreatePersonData{
 		FirstName:   "Ron",
@@ -78,11 +80,11 @@ func Test_PersonService_FindAll(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create() error =%v, wantErr nil", err)
 	}
-	if person != examplePersons[1] {
-		t.Errorf("Create() person = %v, want %v", person, examplePersons[1])
-	}
+	AssertEquals(t, examplePersons[1], person)
 
-	err = service.Delete(context.Background(), 2)
+	pid2 := person.PID
+
+	err = service.Delete(context.Background(), pid2)
 	if err != nil {
 		t.Errorf("Delete() error =%v, wantErr nil", err)
 	}
@@ -91,12 +93,12 @@ func Test_PersonService_FindAll(t *testing.T) {
 	if err != nil {
 		t.Errorf("findAll() error = %v, wantErr nil", err)
 	}
-	expected := []xone.Person{examplePersons[0]}
-	if !reflect.DeepEqual(expected, persons) {
-		t.Errorf("findAll() persons = %v, want %v", persons, expected)
+	expectedCount := 1
+	if expectedCount != len(persons) {
+		t.Errorf("findAll() want slice of size %d, got %v", expectedCount, persons)
 	}
 
-	person, found, err := service.Find(context.Background(), 2)
+	person, found, err := service.Find(context.Background(), pid2)
 	if err != nil {
 		t.Errorf("find() error = %v, wantErr nil", err)
 	}
@@ -108,7 +110,7 @@ func Test_PersonService_FindAll(t *testing.T) {
 		t.Errorf("find() person = %v, want %v", person, expectedPerson)
 	}
 
-	person, found, err = service.Find(context.Background(), 1)
+	person, found, err = service.Find(context.Background(), pid1)
 	if err != nil {
 		t.Errorf("find() error = %v, wantErr nil", err)
 	}
@@ -116,8 +118,17 @@ func Test_PersonService_FindAll(t *testing.T) {
 		t.Errorf("find() found = %v, want true", found)
 	}
 	expectedPerson = examplePersons[0]
-	if person != expectedPerson {
-		t.Errorf("find() person = %v, want %v", person, expectedPerson)
+	AssertEquals(t, examplePersons[0], person)
+}
+
+func AssertEquals(t *testing.T, expected, actual xone.Person) {
+	tmp1 := expected
+	tmp1.PID = ""
+	tmp2 := actual
+	tmp2.PID = ""
+
+	if tmp1 != tmp2 {
+		t.Errorf("want %v, got %v\n", tmp1, tmp2)
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/stillwondering/xone"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -14,12 +15,16 @@ import (
 var _ xone.PersonRepository = (*PersonService)(nil)
 
 type PersonService struct {
-	db *sql.DB
+	db         *sql.DB
+	generateID func() string
 }
 
 func NewPersonService(db *sql.DB) *PersonService {
 	service := PersonService{
 		db: db,
+		generateID: func() string {
+			return uuid.NewV4().String()
+		},
 	}
 
 	return &service
@@ -40,7 +45,7 @@ func (ps *PersonService) FindAll(ctx context.Context) ([]xone.Person, error) {
 	return persons, tx.Commit()
 }
 
-func (ps *PersonService) Find(ctx context.Context, id int) (xone.Person, bool, error) {
+func (ps *PersonService) Find(ctx context.Context, id string) (xone.Person, bool, error) {
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
 		return xone.Person{}, false, err
@@ -62,7 +67,7 @@ func (ps *PersonService) Create(ctx context.Context, data xone.CreatePersonData)
 	}
 	defer tx.Rollback()
 
-	person, err := createPerson(ctx, tx, data)
+	person, err := createPerson(ctx, tx, ps.generateID(), data)
 	if err != nil {
 		return xone.Person{}, err
 	}
@@ -70,7 +75,7 @@ func (ps *PersonService) Create(ctx context.Context, data xone.CreatePersonData)
 	return person, tx.Commit()
 }
 
-func (ps *PersonService) Delete(ctx context.Context, id int) error {
+func (ps *PersonService) Delete(ctx context.Context, id string) error {
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -88,6 +93,7 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 	rows, err := tx.QueryContext(ctx, `
 		SELECT
 			id,
+			public_id,
 			first_name,
 			last_name,
 			date_of_birth,
@@ -102,14 +108,15 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 
 	var persons []xone.Person
 	var id int
-	var firstName, lastName, dobString, genderString string
+	var pid, firstName, lastName, dobString, genderString string
 	for rows.Next() {
-		if err := rows.Scan(&id, &firstName, &lastName, &dobString, &genderString); err != nil {
+		if err := rows.Scan(&id, &pid, &firstName, &lastName, &dobString, &genderString); err != nil {
 			return nil, err
 		}
 
 		p := xone.Person{
 			ID:        id,
+			PID:       pid,
 			FirstName: firstName,
 			LastName:  lastName,
 		}
@@ -131,9 +138,10 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 	return persons, nil
 }
 
-func findPerson(ctx context.Context, tx dbtx, id int) (xone.Person, bool, error) {
+func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, error) {
 	stmt, err := tx.PrepareContext(ctx, `
 		SELECT
+			id,
 			first_name,
 			last_name,
 			date_of_birth,
@@ -141,13 +149,13 @@ func findPerson(ctx context.Context, tx dbtx, id int) (xone.Person, bool, error)
 		FROM
 			person
 		WHERE
-			id = ?
+			public_id = ?
 	`)
 	if err != nil {
 		return xone.Person{}, false, err
 	}
 
-	rows, err := stmt.QueryContext(ctx, id)
+	rows, err := stmt.QueryContext(ctx, pid)
 	if err != nil {
 		return xone.Person{}, false, err
 	}
@@ -156,14 +164,16 @@ func findPerson(ctx context.Context, tx dbtx, id int) (xone.Person, bool, error)
 	p := xone.Person{}
 	found := false
 	for rows.Next() {
+		var id int
 		var firstName, lastName, dobString, genderString string
 
-		if err := rows.Scan(&firstName, &lastName, &dobString, &genderString); err != nil {
+		if err := rows.Scan(&id, &firstName, &lastName, &dobString, &genderString); err != nil {
 			return xone.Person{}, false, err
 		}
 
 		p = xone.Person{
 			ID:        id,
+			PID:       pid,
 			FirstName: firstName,
 			LastName:  lastName,
 		}
@@ -185,14 +195,16 @@ func findPerson(ctx context.Context, tx dbtx, id int) (xone.Person, bool, error)
 	return p, found, nil
 }
 
-func createPerson(ctx context.Context, tx dbtx, data xone.CreatePersonData) (xone.Person, error) {
+func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePersonData) (xone.Person, error) {
 	stmt, err := tx.PrepareContext(ctx, `
 		INSERT INTO person (
+			public_id,
 			first_name,
 			last_name,
 			date_of_birth,
 			gender
 		) VALUES (
+			?,
 			?,
 			?,
 			?,
@@ -205,6 +217,7 @@ func createPerson(ctx context.Context, tx dbtx, data xone.CreatePersonData) (xon
 
 	result, err := stmt.ExecContext(
 		ctx,
+		pid,
 		data.FirstName,
 		data.LastName,
 		data.DateOfBirth.Format(xone.FormatDateOfBirth),
@@ -221,6 +234,7 @@ func createPerson(ctx context.Context, tx dbtx, data xone.CreatePersonData) (xon
 
 	p := xone.Person{
 		ID:          int(id),
+		PID:         pid,
 		FirstName:   data.FirstName,
 		LastName:    data.LastName,
 		DateOfBirth: data.DateOfBirth,
@@ -230,12 +244,12 @@ func createPerson(ctx context.Context, tx dbtx, data xone.CreatePersonData) (xon
 	return p, nil
 }
 
-func deletePerson(ctx context.Context, tx dbtx, id int) error {
+func deletePerson(ctx context.Context, tx dbtx, id string) error {
 	stmt, err := tx.PrepareContext(ctx, `
 		DELETE FROM
 			person
 		WHERE
-			id = ?
+			public_id = ?
 	`)
 	if err != nil {
 		return err

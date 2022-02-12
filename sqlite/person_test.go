@@ -12,6 +12,7 @@ import (
 var persons = []xone.Person{
 	{
 		ID:          1,
+		PID:         "1",
 		FirstName:   "Harry",
 		LastName:    "Potter",
 		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
@@ -19,6 +20,7 @@ var persons = []xone.Person{
 	},
 	{
 		ID:          2,
+		PID:         "2",
 		FirstName:   "Ron",
 		LastName:    "Weasley",
 		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
@@ -26,6 +28,7 @@ var persons = []xone.Person{
 	},
 	{
 		ID:          3,
+		PID:         "3",
 		FirstName:   "Hermione",
 		LastName:    "Granger",
 		DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
@@ -86,7 +89,7 @@ func Test_findPerson(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		testfile string
-		id       int
+		id       string
 	}
 	tests := []struct {
 		name    string
@@ -99,7 +102,7 @@ func Test_findPerson(t *testing.T) {
 			name: "Empty database",
 			args: args{
 				ctx: context.Background(),
-				id:  5,
+				id:  "5",
 			},
 			want:    xone.Person{},
 			found:   false,
@@ -110,7 +113,7 @@ func Test_findPerson(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				testfile: "testdata/Test_findPersons_multiple-people.sql",
-				id:       1,
+				id:       "1",
 			},
 			want:    persons[0],
 			found:   true,
@@ -144,6 +147,7 @@ func Test_createPerson(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		testfile string
+		id       string
 		data     xone.CreatePersonData
 	}
 	tests := []struct {
@@ -156,6 +160,7 @@ func Test_createPerson(t *testing.T) {
 			name: "Empty database",
 			args: args{
 				ctx: context.Background(),
+				id:  "1",
 				data: xone.CreatePersonData{
 					FirstName:   "Harry",
 					LastName:    "Potter",
@@ -171,6 +176,7 @@ func Test_createPerson(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				testfile: "testdata/Test_createPerson_prefill.sql",
+				id:       "3",
 				data: xone.CreatePersonData{
 					FirstName:   "Hermione",
 					LastName:    "Granger",
@@ -190,7 +196,7 @@ func Test_createPerson(t *testing.T) {
 				mustMigrateFile(t, db, tt.args.testfile)
 			}
 
-			got, err := createPerson(tt.args.ctx, db, tt.args.data)
+			got, err := createPerson(tt.args.ctx, db, tt.args.id, tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("createPerson() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -206,7 +212,7 @@ func Test_deletePerson(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		testfile string
-		id       int
+		id       string
 	}
 	tests := []struct {
 		name    string
@@ -217,7 +223,7 @@ func Test_deletePerson(t *testing.T) {
 			name: "Empty database",
 			args: args{
 				ctx: context.Background(),
-				id:  1,
+				id:  "1",
 			},
 			wantErr: false,
 		},
@@ -226,7 +232,7 @@ func Test_deletePerson(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				testfile: "testdata/Test_deletePerson_prefill.sql",
-				id:       1,
+				id:       "1",
 			},
 			wantErr: false,
 		},
