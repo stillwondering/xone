@@ -8,6 +8,8 @@ import (
 	"github.com/stillwondering/xone"
 )
 
+var _ xone.UserService = (*UserService)(nil)
+
 type UserService struct {
 	db *sql.DB
 }

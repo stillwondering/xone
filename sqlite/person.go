@@ -11,6 +11,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var _ xone.PersonRepository = (*PersonService)(nil)
+
 type PersonService struct {
 	db *sql.DB
 }
