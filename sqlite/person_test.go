@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"context"
-	"io/ioutil"
 	"reflect"
 	"testing"
 	"time"
@@ -66,14 +65,12 @@ func Test_findPersons(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := mustOpenDB(t)
-			defer mustCloseDB(t, db)
 
 			if tt.args.testfile != "" {
-				mustExecuteSQL(t, db, tt.args.testfile)
+				mustMigrateFile(t, db, tt.args.testfile)
 			}
-			tx := mustBeginTx(t, db, tt.args.ctx)
 
-			got, err := findPersons(tt.args.ctx, tx)
+			got, err := findPersons(tt.args.ctx, db)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("findPersons() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -123,14 +120,12 @@ func Test_findPerson(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := mustOpenDB(t)
-			defer mustCloseDB(t, db)
 
 			if tt.args.testfile != "" {
-				mustExecuteSQL(t, db, tt.args.testfile)
+				mustMigrateFile(t, db, tt.args.testfile)
 			}
-			tx := mustBeginTx(t, db, tt.args.ctx)
 
-			got, found, err := findPerson(tt.args.ctx, tx, tt.args.id)
+			got, found, err := findPerson(tt.args.ctx, db, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("findPerson() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -190,14 +185,12 @@ func Test_createPerson(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := mustOpenDB(t)
-			defer mustCloseDB(t, db)
 
 			if tt.args.testfile != "" {
-				mustExecuteSQL(t, db, tt.args.testfile)
+				mustMigrateFile(t, db, tt.args.testfile)
 			}
-			tx := mustBeginTx(t, db, tt.args.ctx)
 
-			got, err := createPerson(tt.args.ctx, tx, tt.args.data)
+			got, err := createPerson(tt.args.ctx, db, tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("createPerson() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -241,14 +234,12 @@ func Test_deletePerson(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := mustOpenDB(t)
-			defer mustCloseDB(t, db)
 
 			if tt.args.testfile != "" {
-				mustExecuteSQL(t, db, tt.args.testfile)
+				mustMigrateFile(t, db, tt.args.testfile)
 			}
-			tx := mustBeginTx(t, db, tt.args.ctx)
 
-			err := deletePerson(tt.args.ctx, tx, tt.args.id)
+			err := deletePerson(tt.args.ctx, db, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("createPerson() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -341,46 +332,4 @@ func Test_parseGender(t *testing.T) {
 			}
 		})
 	}
-}
-
-// MustOpenDB returns a new, open DB. Fatal on error.
-func mustOpenDB(tb testing.TB) *DB {
-	tb.Helper()
-
-	db := NewDB(":memory:")
-	if err := db.Open(); err != nil {
-		tb.Fatal(err)
-	}
-	return db
-}
-
-// MustCloseDB closes the DB. Fatal on error.
-func mustCloseDB(tb testing.TB, db *DB) {
-	tb.Helper()
-	if err := db.Close(); err != nil {
-		tb.Fatal(err)
-	}
-}
-
-func mustExecuteSQL(tb testing.TB, db *DB, file string) {
-	tb.Helper()
-	sql, err := ioutil.ReadFile(file)
-	if err != nil {
-		tb.Fatal(err)
-	}
-
-	_, err = db.db.Exec(string(sql))
-	if err != nil {
-		tb.Fatal(err)
-	}
-}
-
-func mustBeginTx(tb testing.TB, db *DB, ctx context.Context) *Tx {
-	tb.Helper()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		tb.Fatal(err)
-	}
-
-	return tx
 }

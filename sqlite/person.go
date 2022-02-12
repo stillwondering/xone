@@ -2,17 +2,20 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/stillwondering/xone"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type PersonService struct {
-	db *DB
+	db *sql.DB
 }
 
-func NewPersonService(db *DB) *PersonService {
+func NewPersonService(db *sql.DB) *PersonService {
 	service := PersonService{
 		db: db,
 	}
@@ -79,7 +82,7 @@ func (ps *PersonService) Delete(ctx context.Context, id int) error {
 	return tx.Commit()
 }
 
-func findPersons(ctx context.Context, tx *Tx) ([]xone.Person, error) {
+func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 	rows, err := tx.QueryContext(ctx, `
 		SELECT
 			id,
@@ -126,7 +129,7 @@ func findPersons(ctx context.Context, tx *Tx) ([]xone.Person, error) {
 	return persons, nil
 }
 
-func findPerson(ctx context.Context, tx *Tx, id int) (xone.Person, bool, error) {
+func findPerson(ctx context.Context, tx dbtx, id int) (xone.Person, bool, error) {
 	stmt, err := tx.PrepareContext(ctx, `
 		SELECT
 			first_name,
@@ -180,7 +183,7 @@ func findPerson(ctx context.Context, tx *Tx, id int) (xone.Person, bool, error) 
 	return p, found, nil
 }
 
-func createPerson(ctx context.Context, tx *Tx, data xone.CreatePersonData) (xone.Person, error) {
+func createPerson(ctx context.Context, tx dbtx, data xone.CreatePersonData) (xone.Person, error) {
 	stmt, err := tx.PrepareContext(ctx, `
 		INSERT INTO person (
 			first_name,
@@ -225,7 +228,7 @@ func createPerson(ctx context.Context, tx *Tx, data xone.CreatePersonData) (xone
 	return p, nil
 }
 
-func deletePerson(ctx context.Context, tx *Tx, id int) error {
+func deletePerson(ctx context.Context, tx dbtx, id int) error {
 	stmt, err := tx.PrepareContext(ctx, `
 		DELETE FROM
 			person

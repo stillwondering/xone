@@ -1,6 +1,7 @@
 package sqlite_test
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/stillwondering/xone/sqlite"
@@ -13,18 +14,18 @@ func TestDB(t *testing.T) {
 }
 
 // MustOpenDB returns a new, open DB. Fatal on error.
-func MustOpenDB(tb testing.TB) *sqlite.DB {
+func MustOpenDB(tb testing.TB) *sql.DB {
 	tb.Helper()
 
-	db := sqlite.NewDB(":memory:")
-	if err := db.Open(); err != nil {
+	db, err := sqlite.Open(":memory:")
+	if err != nil {
 		tb.Fatal(err)
 	}
 	return db
 }
 
 // MustCloseDB closes the DB. Fatal on error.
-func MustCloseDB(tb testing.TB, db *sqlite.DB) {
+func MustCloseDB(tb testing.TB, db *sql.DB) {
 	tb.Helper()
 	if err := db.Close(); err != nil {
 		tb.Fatal(err)

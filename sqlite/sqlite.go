@@ -15,65 +15,56 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// dbtx is an abstraction layer over a database OR a transaction.
+type dbtx interface {
+	PrepareContext(context.Context, string) (*sql.Stmt, error)
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+}
+
 //go:embed migration/*.sql
 var migrationFS embed.FS
 
-type DB struct {
-	db     *sql.DB
-	dsn    string
-	ctx    context.Context
-	cancel func()
-}
-
-func NewDB(dsn string) *DB {
-	db := DB{
-		dsn: dsn,
-	}
-	db.ctx, db.cancel = context.WithCancel(context.Background())
-
-	return &db
-}
-
-func (db *DB) Open() error {
-	if db.dsn == "" {
-		return errors.New("DSN required")
+func Open(dsn string) (*sql.DB, error) {
+	if dsn == "" {
+		return nil, errors.New("DSN required")
 	}
 
-	if db.dsn != ":memory:" {
-		if err := os.MkdirAll(filepath.Dir(db.dsn), 0700); err != nil {
-			return err
+	if dsn != ":memory:" {
+		if err := os.MkdirAll(filepath.Dir(dsn), 0700); err != nil {
+			return nil, err
 		}
 	}
 
-	var err error
-	if db.db, err = sql.Open("sqlite3", db.dsn); err != nil {
-		return err
+	db, err := sql.Open("sqlite3", dsn)
+	if err != nil {
+		return nil, err
 	}
 
 	// Enable foreign key checks. For historical reasons, SQLite does not check
 	// foreign key constraints by default... which is kinda insane. There's some
 	// overhead on inserts to verify foreign key integrity but it's definitely
 	// worth it.
-	if _, err := db.db.Exec(`PRAGMA foreign_keys = ON;`); err != nil {
-		return fmt.Errorf("foreign keys pragma: %w", err)
+	if _, err := db.Exec(`PRAGMA foreign_keys = ON;`); err != nil {
+		return nil, fmt.Errorf("foreign keys pragma: %w", err)
 	}
 
 	// Enable WAL. SQLite performs better with the WAL  because it allows
 	// multiple readers to operate while data is being written.
-	if _, err := db.db.Exec(`PRAGMA journal_mode = wal;`); err != nil {
-		return fmt.Errorf("enable wal: %w", err)
+	if _, err := db.Exec(`PRAGMA journal_mode = wal;`); err != nil {
+		return nil, fmt.Errorf("enable wal: %w", err)
 	}
 
-	if err := db.migrate(); err != nil {
-		return fmt.Errorf("migrate: %w", err)
+	if err := migrate(db); err != nil {
+		return nil, fmt.Errorf("migrate: %w", err)
 	}
 
-	return nil
+	return db, nil
 }
 
-func (db *DB) migrate() error {
+func migrate(db *sql.DB) error {
 	// Ensure the 'migrations' table exists so we don't duplicate migrations.
-	if _, err := db.db.Exec(`CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY);`); err != nil {
+	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY);`); err != nil {
 		return fmt.Errorf("cannot create migrations table: %w", err)
 	}
 
@@ -87,7 +78,7 @@ func (db *DB) migrate() error {
 
 	// Loop over all migration files and execute them in order.
 	for _, name := range names {
-		if err := db.migrateFile(name); err != nil {
+		if err := migrateFile(db, name); err != nil {
 			return fmt.Errorf("migration error: name=%q err=%w", name, err)
 		}
 	}
@@ -96,8 +87,8 @@ func (db *DB) migrate() error {
 
 // migrate runs a single migration file within a transaction. On success, the
 // migration file name is saved to the "migrations" table to prevent re-running.
-func (db *DB) migrateFile(name string) error {
-	tx, err := db.db.Begin()
+func migrateFile(db *sql.DB, name string) error {
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
@@ -124,32 +115,4 @@ func (db *DB) migrateFile(name string) error {
 	}
 
 	return tx.Commit()
-}
-
-func (db *DB) Close() error {
-	db.cancel()
-
-	if db.db == nil {
-		return nil
-	}
-
-	return db.db.Close()
-}
-
-// Tx wraps the SQL Tx object to provide a timestamp at the start of the transaction.
-type Tx struct {
-	*sql.Tx
-	db *DB
-}
-
-func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
-	tx, err := db.db.BeginTx(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Tx{
-		Tx: tx,
-		db: db,
-	}, nil
 }

@@ -10,9 +10,8 @@ import (
 
 func Test_findUserByEmail(t *testing.T) {
 	type args struct {
-		ctx      context.Context
-		email    string
-		testfile string
+		ctx   context.Context
+		email string
 	}
 	tests := []struct {
 		name      string
@@ -22,10 +21,10 @@ func Test_findUserByEmail(t *testing.T) {
 		wantErr   bool
 	}{
 		{
-			name: "No users in database",
+			name: "No user with this email",
 			args: args{
 				ctx:   context.Background(),
-				email: "albus.dumbledore@hogwarts.co.uk",
+				email: "severus.snape@hogwarts.co.uk",
 			},
 			want:      xone.User{},
 			wantFound: false,
@@ -34,9 +33,8 @@ func Test_findUserByEmail(t *testing.T) {
 		{
 			name: "User in database",
 			args: args{
-				ctx:      context.Background(),
-				email:    "albus.dumbledore@hogwarts.co.uk",
-				testfile: "testdata/Test_findUserByEmail_prefill.sql",
+				ctx:   context.Background(),
+				email: "albus.dumbledore@hogwarts.co.uk",
 			},
 			want: xone.User{
 				Email:    "albus.dumbledore@hogwarts.co.uk",
@@ -49,13 +47,9 @@ func Test_findUserByEmail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := mustOpenDB(t)
-			defer mustCloseDB(t, db)
-			if tt.args.testfile != "" {
-				mustExecuteSQL(t, db, tt.args.testfile)
-			}
-			tx := mustBeginTx(t, db, context.Background())
+			mustMigrateFile(t, db, "testdata/Test_findUserByEmail_prefill.sql")
 
-			got, gotFound, err := findUserByEmail(tt.args.ctx, tx, tt.args.email)
+			got, gotFound, err := findUserByEmail(tt.args.ctx, db, tt.args.email)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("findUserByEmail() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -72,9 +66,8 @@ func Test_findUserByEmail(t *testing.T) {
 
 func Test_createUser(t *testing.T) {
 	type args struct {
-		ctx      context.Context
-		data     xone.CreateUserData
-		testfile string
+		ctx  context.Context
+		data xone.CreateUserData
 	}
 	tests := []struct {
 		name    string
@@ -83,21 +76,6 @@ func Test_createUser(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Empty database",
-			args: args{
-				ctx: context.Background(),
-				data: xone.CreateUserData{
-					Email:    "albus.dumbledore@hogwarts.co.uk",
-					Password: "Harrydidyouputyournameinthegobletoffire",
-				},
-			},
-			want: xone.User{
-				Email:    "albus.dumbledore@hogwarts.co.uk",
-				Password: "Harrydidyouputyournameinthegobletoffire",
-			},
-			wantErr: false,
-		},
-		{
 			name: "User already exists",
 			args: args{
 				ctx: context.Background(),
@@ -105,7 +83,6 @@ func Test_createUser(t *testing.T) {
 					Email:    "albus.dumbledore@hogwarts.co.uk",
 					Password: "Harrydidyouputyournameinthegobletoffire",
 				},
-				testfile: "testdata/Test_createUser_prefill.sql",
 			},
 			want:    xone.User{},
 			wantErr: true,
@@ -118,7 +95,6 @@ func Test_createUser(t *testing.T) {
 					Email:    "severus.snape@hogwarts.co.uk",
 					Password: "Detention!",
 				},
-				testfile: "testdata/Test_createUser_prefill.sql",
 			},
 			want: xone.User{
 				Email:    "severus.snape@hogwarts.co.uk",
@@ -130,13 +106,9 @@ func Test_createUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := mustOpenDB(t)
-			defer mustCloseDB(t, db)
-			if tt.args.testfile != "" {
-				mustExecuteSQL(t, db, tt.args.testfile)
-			}
-			tx := mustBeginTx(t, db, context.Background())
+			mustMigrateFile(t, db, "testdata/Test_findUserByEmail_prefill.sql")
 
-			got, err := createUser(tt.args.ctx, tx, tt.args.data)
+			got, err := createUser(tt.args.ctx, db, tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("createUser() error = %v, wantErr %v", err, tt.wantErr)
 				return

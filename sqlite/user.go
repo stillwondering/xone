@@ -9,10 +9,10 @@ import (
 )
 
 type UserService struct {
-	db *DB
+	db *sql.DB
 }
 
-func NewUserService(db *DB) (*UserService, error) {
+func NewUserService(db *sql.DB) (*UserService, error) {
 	service := UserService{
 		db: db,
 	}
@@ -56,8 +56,8 @@ func (us *UserService) Create(ctx context.Context, data xone.CreateUserData) (xo
 	return user, tx.Commit()
 }
 
-func findUserByEmail(ctx context.Context, tx *Tx, email string) (xone.User, bool, error) {
-	stmt, err := tx.PrepareContext(ctx, `
+func findUserByEmail(ctx context.Context, db dbtx, email string) (xone.User, bool, error) {
+	stmt, err := db.PrepareContext(ctx, `
 		SELECT
 			email,
 			password
@@ -83,8 +83,8 @@ func findUserByEmail(ctx context.Context, tx *Tx, email string) (xone.User, bool
 	return user, true, nil
 }
 
-func createUser(ctx context.Context, tx *Tx, data xone.CreateUserData) (xone.User, error) {
-	stmt, err := tx.PrepareContext(ctx, `
+func createUser(ctx context.Context, db dbtx, data xone.CreateUserData) (xone.User, error) {
+	stmt, err := db.PrepareContext(ctx, `
 		INSERT INTO users (
 			email,
 			password
