@@ -38,19 +38,19 @@ func TestWrite(t *testing.T) {
 					{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31")},
 				},
 			},
-			wantDst: "Harry,Potter,1980-07-31,Other\n",
+			wantDst: "Harry,Potter,1980-07-31\n",
 			wantErr: false,
 		},
 		{
 			name: "Multiple persons",
 			args: args{
 				persons: []xone.Person{
-					{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31"), Gender: xone.Male},
-					{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01"), Gender: xone.Male},
-					{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19"), Gender: xone.Female},
+					{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31")},
+					{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01")},
+					{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19")},
 				},
 			},
-			wantDst: "Harry,Potter,1980-07-31,Male\nRon,Weasley,1980-03-01,Male\nHermione,Granger,1979-09-19,Female\n",
+			wantDst: "Harry,Potter,1980-07-31\nRon,Weasley,1980-03-01\nHermione,Granger,1979-09-19\n",
 			wantErr: false,
 		},
 	}
@@ -95,9 +95,9 @@ func TestWriteFile(t *testing.T) {
 			args: args{
 				file: path.Join(dir, "MultiplePeople.csv"),
 				persons: []xone.Person{
-					{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31"), Gender: xone.Male},
-					{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01"), Gender: xone.Male},
-					{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19"), Gender: xone.Female},
+					{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31")},
+					{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01")},
+					{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19")},
 				},
 			},
 			compareWithFile: "testdata/MultiplePeople.csv",
@@ -138,22 +138,22 @@ func TestParse(t *testing.T) {
 		{
 			name: "One record",
 			args: args{
-				src: strings.NewReader("Harry,Potter,1980-07-31,Other\n"),
+				src: strings.NewReader("Harry,Potter,1980-07-31\n"),
 			},
 			want: []xone.Person{
-				{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31"), Gender: xone.Other},
+				{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31")},
 			},
 			wantErr: false,
 		},
 		{
 			name: "Multiple records",
 			args: args{
-				src: strings.NewReader("Harry,Potter,1980-07-31,Male\nRon,Weasley,1980-03-01,Male\nHermione,Granger,1979-09-19,Female\n"),
+				src: strings.NewReader("Harry,Potter,1980-07-31\nRon,Weasley,1980-03-01\nHermione,Granger,1979-09-19\n"),
 			},
 			want: []xone.Person{
-				{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31"), Gender: xone.Male},
-				{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01"), Gender: xone.Male},
-				{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19"), Gender: xone.Female},
+				{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31")},
+				{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01")},
+				{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19")},
 			},
 			wantErr: false,
 		},
@@ -214,9 +214,9 @@ func TestParseFile(t *testing.T) {
 			name: "MultiplePeople",
 			args: args{file: "testdata/MultiplePeople.csv"},
 			want: []xone.Person{
-				{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31"), Gender: xone.Male},
-				{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01"), Gender: xone.Male},
-				{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19"), Gender: xone.Female},
+				{FirstName: "Harry", LastName: "Potter", DateOfBirth: dateFromString(t, "1980-07-31")},
+				{FirstName: "Ron", LastName: "Weasley", DateOfBirth: dateFromString(t, "1980-03-01")},
+				{FirstName: "Hermione", LastName: "Granger", DateOfBirth: dateFromString(t, "1979-09-19")},
 			},
 			wantErr: false,
 		},

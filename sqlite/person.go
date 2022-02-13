@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -96,8 +95,7 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 			public_id,
 			first_name,
 			last_name,
-			date_of_birth,
-			gender
+			date_of_birth
 		FROM
 			person
 	`)
@@ -108,9 +106,9 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 
 	var persons []xone.Person
 	var id int
-	var pid, firstName, lastName, dobString, genderString string
+	var pid, firstName, lastName, dobString string
 	for rows.Next() {
-		if err := rows.Scan(&id, &pid, &firstName, &lastName, &dobString, &genderString); err != nil {
+		if err := rows.Scan(&id, &pid, &firstName, &lastName, &dobString); err != nil {
 			return nil, err
 		}
 
@@ -122,10 +120,6 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 		}
 
 		if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
-			return nil, err
-		}
-
-		if p.Gender, err = parseGender(genderString); err != nil {
 			return nil, err
 		}
 
@@ -144,8 +138,7 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 			id,
 			first_name,
 			last_name,
-			date_of_birth,
-			gender
+			date_of_birth
 		FROM
 			person
 		WHERE
@@ -165,9 +158,9 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 	found := false
 	for rows.Next() {
 		var id int
-		var firstName, lastName, dobString, genderString string
+		var firstName, lastName, dobString string
 
-		if err := rows.Scan(&id, &firstName, &lastName, &dobString, &genderString); err != nil {
+		if err := rows.Scan(&id, &firstName, &lastName, &dobString); err != nil {
 			return xone.Person{}, false, err
 		}
 
@@ -179,10 +172,6 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 		}
 
 		if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
-			return xone.Person{}, false, err
-		}
-
-		if p.Gender, err = parseGender(genderString); err != nil {
 			return xone.Person{}, false, err
 		}
 
@@ -201,10 +190,8 @@ func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePers
 			public_id,
 			first_name,
 			last_name,
-			date_of_birth,
-			gender
+			date_of_birth
 		) VALUES (
-			?,
 			?,
 			?,
 			?,
@@ -221,7 +208,6 @@ func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePers
 		data.FirstName,
 		data.LastName,
 		data.DateOfBirth.Format(xone.FormatDateOfBirth),
-		formatGender(data.Gender),
 	)
 	if err != nil {
 		return xone.Person{}, err
@@ -238,7 +224,6 @@ func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePers
 		FirstName:   data.FirstName,
 		LastName:    data.LastName,
 		DateOfBirth: data.DateOfBirth,
-		Gender:      data.Gender,
 	}
 
 	return p, nil
@@ -262,29 +247,4 @@ func deletePerson(ctx context.Context, tx dbtx, id string) error {
 
 func parseDateOfBirth(s string) (time.Time, error) {
 	return time.Parse(xone.FormatDateOfBirth, s)
-}
-
-func parseGender(s string) (xone.Gender, error) {
-	genders := map[string]xone.Gender{
-		"f": xone.Female,
-		"m": xone.Male,
-		"o": xone.Other,
-	}
-
-	g, found := genders[s]
-	if !found {
-		return xone.Other, fmt.Errorf("unsupported gender %s", s)
-	}
-
-	return g, nil
-}
-
-func formatGender(g xone.Gender) string {
-	genders := map[xone.Gender]string{
-		xone.Female: "f",
-		xone.Male:   "m",
-		xone.Other:  "o",
-	}
-
-	return genders[g]
 }

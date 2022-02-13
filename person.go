@@ -9,7 +9,6 @@ type Person struct {
 	FirstName   string
 	LastName    string
 	DateOfBirth time.Time
-	Gender      Gender
 }
 
 // Age calculates a person's age based on their date of birth and with respect
@@ -49,5 +48,4 @@ type CreatePersonData struct {
 	FirstName   string
 	LastName    string
 	DateOfBirth time.Time
-	Gender      Gender
 }

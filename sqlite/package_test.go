@@ -17,7 +17,6 @@ var examplePersons = []xone.Person{
 		FirstName:   "Harry",
 		LastName:    "Potter",
 		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
-		Gender:      xone.Male,
 	},
 	{
 		ID:          2,
@@ -25,7 +24,6 @@ var examplePersons = []xone.Person{
 		FirstName:   "Ron",
 		LastName:    "Weasley",
 		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
-		Gender:      xone.Male,
 	},
 	{
 		ID:          3,
@@ -33,7 +31,6 @@ var examplePersons = []xone.Person{
 		FirstName:   "Hermione",
 		LastName:    "Granger",
 		DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
-		Gender:      xone.Female,
 	},
 }
 
@@ -62,7 +59,6 @@ func Test_PersonService_FindAll(t *testing.T) {
 		FirstName:   "Harry",
 		LastName:    "Potter",
 		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
-		Gender:      xone.Male,
 	})
 	if err != nil {
 		t.Errorf("Create() error =%v, wantErr nil", err)
@@ -75,7 +71,6 @@ func Test_PersonService_FindAll(t *testing.T) {
 		FirstName:   "Ron",
 		LastName:    "Weasley",
 		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
-		Gender:      xone.Male,
 	})
 	if err != nil {
 		t.Errorf("Create() error =%v, wantErr nil", err)

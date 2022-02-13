@@ -16,7 +16,6 @@ var persons = []xone.Person{
 		FirstName:   "Harry",
 		LastName:    "Potter",
 		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
-		Gender:      xone.Male,
 	},
 	{
 		ID:          2,
@@ -24,7 +23,6 @@ var persons = []xone.Person{
 		FirstName:   "Ron",
 		LastName:    "Weasley",
 		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
-		Gender:      xone.Male,
 	},
 	{
 		ID:          3,
@@ -32,7 +30,6 @@ var persons = []xone.Person{
 		FirstName:   "Hermione",
 		LastName:    "Granger",
 		DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
-		Gender:      xone.Female,
 	},
 }
 
@@ -165,7 +162,6 @@ func Test_createPerson(t *testing.T) {
 					FirstName:   "Harry",
 					LastName:    "Potter",
 					DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
-					Gender:      xone.Male,
 				},
 			},
 			want:    persons[0],
@@ -181,7 +177,6 @@ func Test_createPerson(t *testing.T) {
 					FirstName:   "Hermione",
 					LastName:    "Granger",
 					DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
-					Gender:      xone.Female,
 				},
 			},
 			want:    persons[2],
@@ -286,55 +281,6 @@ func Test_parseDateOfBirth(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseDatOfBirth() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_parseGender(t *testing.T) {
-	type args struct {
-		s string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    xone.Gender
-		wantErr bool
-	}{
-		{
-			name:    "Male",
-			args:    args{s: "m"},
-			want:    xone.Male,
-			wantErr: false,
-		},
-		{
-			name:    "Female",
-			args:    args{s: "f"},
-			want:    xone.Female,
-			wantErr: false,
-		},
-		{
-			name:    "Other",
-			args:    args{s: "o"},
-			want:    xone.Other,
-			wantErr: false,
-		},
-		{
-			name:    "Unsupported",
-			args:    args{s: "bla"},
-			want:    xone.Other,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseGender(tt.args.s)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseGender() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseGender() = %v, want %v", got, tt.want)
 			}
 		})
 	}

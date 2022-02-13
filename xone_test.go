@@ -11,7 +11,6 @@ func TestPerson_Age(t *testing.T) {
 		FirstName   string
 		LastName    string
 		DateOfBirth time.Time
-		Gender      Gender
 	}
 	type args struct {
 		today time.Time
@@ -70,7 +69,6 @@ func TestPerson_Age(t *testing.T) {
 				FirstName:   tt.fields.FirstName,
 				LastName:    tt.fields.LastName,
 				DateOfBirth: tt.fields.DateOfBirth,
-				Gender:      tt.fields.Gender,
 			}
 			if got := p.Age(tt.args.today); got != tt.want {
 				t.Errorf("Person.Age() = %v, want %v", got, tt.want)
