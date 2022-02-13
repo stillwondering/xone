@@ -49,3 +49,20 @@ type CreatePersonData struct {
 	LastName    string
 	DateOfBirth time.Time
 }
+
+// UpdatePersonData contains a person's data points which can be updated.
+type UpdatePersonData struct {
+	FirstName   string
+	LastName    string
+	DateOfBirth time.Time
+}
+
+// ToUpdateData returns a struct that can be used as a starting point when
+// updating a person's data.
+func (p Person) ToUpdateData() UpdatePersonData {
+	return UpdatePersonData{
+		FirstName:   p.FirstName,
+		LastName:    p.LastName,
+		DateOfBirth: p.DateOfBirth,
+	}
+}

@@ -88,6 +88,20 @@ func (ps *PersonService) Delete(ctx context.Context, id string) error {
 	return tx.Commit()
 }
 
+func (ps *PersonService) Update(ctx context.Context, id string, data xone.UpdatePersonData) error {
+	tx, err := ps.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if err := updatePerson(ctx, tx, id, data); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 	rows, err := tx.QueryContext(ctx, `
 		SELECT
@@ -252,6 +266,31 @@ func deletePerson(ctx context.Context, tx dbtx, id string) error {
 	}
 
 	_, err = stmt.ExecContext(ctx, id)
+
+	return err
+}
+
+func updatePerson(ctx context.Context, tx dbtx, id string, upd xone.UpdatePersonData) error {
+	stmt, err := tx.PrepareContext(ctx, `
+		UPDATE
+			person
+		SET
+			first_name = ?,
+			last_name = ?,
+			date_of_birth = ?
+		WHERE
+			public_id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	dob := ""
+	if !upd.DateOfBirth.IsZero() {
+		dob = upd.DateOfBirth.Format(xone.FormatDateOfBirth)
+	}
+
+	_, err = stmt.ExecContext(ctx, upd.FirstName, upd.LastName, dob, id)
 
 	return err
 }

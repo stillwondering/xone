@@ -280,6 +280,58 @@ func Test_deletePerson(t *testing.T) {
 	}
 }
 
+func Test_updatePerson(t *testing.T) {
+	type args struct {
+		id  string
+		upd xone.UpdatePersonData
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantErr    bool
+		wantPerson xone.Person
+	}{
+		{
+			name: "Update existing person",
+			args: args{
+				id: "2",
+				upd: xone.UpdatePersonData{
+					FirstName:   "Ronald",
+					LastName:    "Weasley",
+					DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			wantErr: false,
+			wantPerson: xone.Person{
+				ID:          2,
+				PID:         "2",
+				FirstName:   "Ronald",
+				LastName:    "Weasley",
+				DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := mustOpenDB(t)
+			mustMigrateFile(t, db, "testdata/Test_updatePerson.sql")
+
+			if err := updatePerson(context.Background(), db, tt.args.id, tt.args.upd); (err != nil) != tt.wantErr {
+				t.Errorf("updatePerson() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			p, _, err := findPerson(context.Background(), db, tt.args.id)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !reflect.DeepEqual(p, tt.wantPerson) {
+				t.Errorf("updatePerson() = %v, want %v", p, tt.wantPerson)
+			}
+		})
+	}
+}
+
 func Test_parseDateOfBirth(t *testing.T) {
 	type args struct {
 		s string

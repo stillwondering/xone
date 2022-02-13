@@ -13,6 +13,7 @@ type PersonRepository interface {
 	Find(context.Context, string) (Person, bool, error)
 	Create(context.Context, CreatePersonData) (Person, error)
 	Delete(context.Context, string) error
+	Update(context.Context, string, UpdatePersonData) error
 }
 
 type UserService interface {
