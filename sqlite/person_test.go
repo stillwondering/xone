@@ -22,7 +22,7 @@ var persons = []xone.Person{
 		PID:         "2",
 		FirstName:   "Ron",
 		LastName:    "Weasley",
-		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
+		DateOfBirth: time.Time{},
 	},
 	{
 		ID:          3,
@@ -116,6 +116,17 @@ func Test_findPerson(t *testing.T) {
 			found:   true,
 			wantErr: false,
 		},
+		{
+			name: "Empty date of birth",
+			args: args{
+				ctx:      context.Background(),
+				testfile: "testdata/Test_findPersons_multiple-people.sql",
+				id:       "2",
+			},
+			want:    persons[1],
+			found:   true,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -180,6 +191,26 @@ func Test_createPerson(t *testing.T) {
 				},
 			},
 			want:    persons[2],
+			wantErr: false,
+		},
+		{
+			name: "Empty date of birth",
+			args: args{
+				ctx:      context.Background(),
+				testfile: "testdata/Test_createPerson_prefill.sql",
+				id:       "3",
+				data: xone.CreatePersonData{
+					FirstName: "Hermione",
+					LastName:  "Granger",
+				},
+			},
+			want: xone.Person{
+				ID:          3,
+				PID:         "3",
+				FirstName:   "Hermione",
+				LastName:    "Granger",
+				DateOfBirth: time.Time{},
+			},
 			wantErr: false,
 		},
 	}

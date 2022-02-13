@@ -113,14 +113,17 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 		}
 
 		p := xone.Person{
-			ID:        id,
-			PID:       pid,
-			FirstName: firstName,
-			LastName:  lastName,
+			ID:          id,
+			PID:         pid,
+			FirstName:   firstName,
+			LastName:    lastName,
+			DateOfBirth: time.Time{},
 		}
 
-		if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
-			return nil, err
+		if dobString != "" {
+			if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
+				return nil, err
+			}
 		}
 
 		persons = append(persons, p)
@@ -165,14 +168,17 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 		}
 
 		p = xone.Person{
-			ID:        id,
-			PID:       pid,
-			FirstName: firstName,
-			LastName:  lastName,
+			ID:          id,
+			PID:         pid,
+			FirstName:   firstName,
+			LastName:    lastName,
+			DateOfBirth: time.Time{},
 		}
 
-		if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
-			return xone.Person{}, false, err
+		if dobString != "" {
+			if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
+				return xone.Person{}, false, err
+			}
 		}
 
 		found = true
@@ -202,12 +208,17 @@ func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePers
 		return xone.Person{}, err
 	}
 
+	dob := ""
+	if !data.DateOfBirth.IsZero() {
+		dob = data.DateOfBirth.Format(xone.FormatDateOfBirth)
+	}
+
 	result, err := stmt.ExecContext(
 		ctx,
 		pid,
 		data.FirstName,
 		data.LastName,
-		data.DateOfBirth.Format(xone.FormatDateOfBirth),
+		dob,
 	)
 	if err != nil {
 		return xone.Person{}, err
