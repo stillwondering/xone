@@ -16,6 +16,7 @@ var persons = []xone.Person{
 		FirstName:   "Harry",
 		LastName:    "Potter",
 		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
+		Email:       "harry.potter@hogwarts.co.uk",
 	},
 	{
 		ID:          2,
@@ -23,6 +24,7 @@ var persons = []xone.Person{
 		FirstName:   "Ron",
 		LastName:    "Weasley",
 		DateOfBirth: time.Time{},
+		Email:       "ron.weasley@hogwarts.co.uk",
 	},
 	{
 		ID:          3,
@@ -30,6 +32,7 @@ var persons = []xone.Person{
 		FirstName:   "Hermione",
 		LastName:    "Granger",
 		DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
+		Email:       "hermione.granger@hogwarts.co.uk",
 	},
 }
 
@@ -56,7 +59,7 @@ func Test_findPersons(t *testing.T) {
 			name: "Filled database",
 			args: args{
 				ctx:      context.Background(),
-				testfile: "testdata/Test_findPersons_multiple-people.sql",
+				testfile: "testdata/people.sql",
 			},
 			want:    persons,
 			wantErr: false,
@@ -109,7 +112,7 @@ func Test_findPerson(t *testing.T) {
 			name: "Filled database",
 			args: args{
 				ctx:      context.Background(),
-				testfile: "testdata/Test_findPersons_multiple-people.sql",
+				testfile: "testdata/people.sql",
 				id:       "1",
 			},
 			want:    persons[0],
@@ -120,7 +123,7 @@ func Test_findPerson(t *testing.T) {
 			name: "Empty date of birth",
 			args: args{
 				ctx:      context.Background(),
-				testfile: "testdata/Test_findPersons_multiple-people.sql",
+				testfile: "testdata/people.sql",
 				id:       "2",
 			},
 			want:    persons[1],
@@ -173,6 +176,7 @@ func Test_createPerson(t *testing.T) {
 					FirstName:   "Harry",
 					LastName:    "Potter",
 					DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
+					Email:       "harry.potter@hogwarts.co.uk",
 				},
 			},
 			want:    persons[0],
@@ -188,6 +192,7 @@ func Test_createPerson(t *testing.T) {
 					FirstName:   "Hermione",
 					LastName:    "Granger",
 					DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
+					Email:       "hermione.granger@hogwarts.co.uk",
 				},
 			},
 			want:    persons[2],
@@ -299,6 +304,7 @@ func Test_updatePerson(t *testing.T) {
 					FirstName:   "Ronald",
 					LastName:    "Weasley",
 					DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
+					Phone:       "1234",
 				},
 			},
 			wantErr: false,
@@ -308,13 +314,15 @@ func Test_updatePerson(t *testing.T) {
 				FirstName:   "Ronald",
 				LastName:    "Weasley",
 				DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
+				Email:       "",
+				Phone:       "1234",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := mustOpenDB(t)
-			mustMigrateFile(t, db, "testdata/Test_updatePerson.sql")
+			mustMigrateFile(t, db, "testdata/people.sql")
 
 			if err := updatePerson(context.Background(), db, tt.args.id, tt.args.upd); (err != nil) != tt.wantErr {
 				t.Errorf("updatePerson() error = %v, wantErr %v", err, tt.wantErr)

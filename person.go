@@ -9,6 +9,9 @@ type Person struct {
 	FirstName   string
 	LastName    string
 	DateOfBirth time.Time
+	Email       string
+	Phone       string
+	Mobile      string
 }
 
 // Age calculates a person's age based on their date of birth and with respect
@@ -48,6 +51,9 @@ type CreatePersonData struct {
 	FirstName   string
 	LastName    string
 	DateOfBirth time.Time
+	Email       string
+	Phone       string
+	Mobile      string
 }
 
 // UpdatePersonData contains a person's data points which can be updated.
@@ -55,6 +61,9 @@ type UpdatePersonData struct {
 	FirstName   string
 	LastName    string
 	DateOfBirth time.Time
+	Email       string
+	Phone       string
+	Mobile      string
 }
 
 // ToUpdateData returns a struct that can be used as a starting point when
@@ -64,5 +73,8 @@ func (p Person) ToUpdateData() UpdatePersonData {
 		FirstName:   p.FirstName,
 		LastName:    p.LastName,
 		DateOfBirth: p.DateOfBirth,
+		Email:       p.Email,
+		Phone:       p.Phone,
+		Mobile:      p.Mobile,
 	}
 }

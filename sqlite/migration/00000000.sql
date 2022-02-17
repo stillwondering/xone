@@ -3,7 +3,10 @@ CREATE TABLE `person` (
     `public_id` TEXT NOT NULL UNIQUE,
     `first_name` TEXT NOT NULL,
     `last_name` TEXT NOT NULL,
-    `date_of_birth` TEXT NOT NULL
+    `date_of_birth` TEXT NOT NULL,
+    `email` TEXT DEFAULT '',
+    `phone` TEXT DEFAULT '',
+    `mobile` TEXT DEFAULT ''
 );
 
 CREATE TABLE `person_history` (
@@ -13,7 +16,10 @@ CREATE TABLE `person_history` (
     `public_id` TEXT NOT NULL,
     `first_name` TEXT NOT NULL,
     `last_name` TEXT NOT NULL,
-    `date_of_birth` TEXT NOT NULL
+    `date_of_birth` TEXT NOT NULL,
+    `email` TEXT DEFAULT '',
+    `phone` TEXT DEFAULT '',
+    `mobile` TEXT DEFAULT ''
 );
 
 CREATE TRIGGER update_history_after_insert_person
@@ -25,14 +31,20 @@ BEGIN
         public_id,
         first_name,
         last_name,
-        date_of_birth
+        date_of_birth,
+        email,
+        phone,
+        mobile
     ) VALUES (
         datetime(),
         NEW.id,
         NEW.public_id,
         NEW.first_name,
         NEW.last_name,
-        NEW.date_of_birth
+        NEW.date_of_birth,
+        NEW.email,
+        NEW.phone,
+        NEW.mobile
     );
 END;
 
@@ -45,14 +57,20 @@ BEGIN
         public_id,
         first_name,
         last_name,
-        date_of_birth
+        date_of_birth,
+        email,
+        phone,
+        mobile
     ) VALUES (
         datetime(),
         NEW.id,
         NEW.public_id,
         NEW.first_name,
         NEW.last_name,
-        NEW.date_of_birth
+        NEW.date_of_birth,
+        NEW.email,
+        NEW.phone,
+        NEW.mobile
     );
 END;
 

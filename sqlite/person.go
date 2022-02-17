@@ -109,7 +109,10 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 			public_id,
 			first_name,
 			last_name,
-			date_of_birth
+			date_of_birth,
+			email,
+			phone,
+			mobile
 		FROM
 			person
 	`)
@@ -120,9 +123,9 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 
 	var persons []xone.Person
 	var id int
-	var pid, firstName, lastName, dobString string
+	var pid, firstName, lastName, dobString, email, phone, mobile string
 	for rows.Next() {
-		if err := rows.Scan(&id, &pid, &firstName, &lastName, &dobString); err != nil {
+		if err := rows.Scan(&id, &pid, &firstName, &lastName, &dobString, &email, &phone, &mobile); err != nil {
 			return nil, err
 		}
 
@@ -132,6 +135,9 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 			FirstName:   firstName,
 			LastName:    lastName,
 			DateOfBirth: time.Time{},
+			Email:       email,
+			Phone:       phone,
+			Mobile:      mobile,
 		}
 
 		if dobString != "" {
@@ -155,7 +161,10 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 			id,
 			first_name,
 			last_name,
-			date_of_birth
+			date_of_birth,
+			email,
+			phone,
+			mobile
 		FROM
 			person
 		WHERE
@@ -175,9 +184,9 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 	found := false
 	for rows.Next() {
 		var id int
-		var firstName, lastName, dobString string
+		var firstName, lastName, dobString, email, phone, mobile string
 
-		if err := rows.Scan(&id, &firstName, &lastName, &dobString); err != nil {
+		if err := rows.Scan(&id, &firstName, &lastName, &dobString, &email, &phone, &mobile); err != nil {
 			return xone.Person{}, false, err
 		}
 
@@ -187,6 +196,9 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 			FirstName:   firstName,
 			LastName:    lastName,
 			DateOfBirth: time.Time{},
+			Email:       email,
+			Phone:       phone,
+			Mobile:      mobile,
 		}
 
 		if dobString != "" {
@@ -210,8 +222,14 @@ func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePers
 			public_id,
 			first_name,
 			last_name,
-			date_of_birth
+			date_of_birth,
+			email,
+			phone,
+			mobile
 		) VALUES (
+			?,
+			?,
+			?,
 			?,
 			?,
 			?,
@@ -233,6 +251,9 @@ func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePers
 		data.FirstName,
 		data.LastName,
 		dob,
+		data.Email,
+		data.Phone,
+		data.Mobile,
 	)
 	if err != nil {
 		return xone.Person{}, err
@@ -249,6 +270,9 @@ func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePers
 		FirstName:   data.FirstName,
 		LastName:    data.LastName,
 		DateOfBirth: data.DateOfBirth,
+		Email:       data.Email,
+		Phone:       data.Phone,
+		Mobile:      data.Mobile,
 	}
 
 	return p, nil
@@ -277,7 +301,10 @@ func updatePerson(ctx context.Context, tx dbtx, id string, upd xone.UpdatePerson
 		SET
 			first_name = ?,
 			last_name = ?,
-			date_of_birth = ?
+			date_of_birth = ?,
+			email = ?,
+			phone = ?,
+			mobile = ?
 		WHERE
 			public_id = ?
 	`)
@@ -290,7 +317,7 @@ func updatePerson(ctx context.Context, tx dbtx, id string, upd xone.UpdatePerson
 		dob = upd.DateOfBirth.Format(xone.FormatDateOfBirth)
 	}
 
-	_, err = stmt.ExecContext(ctx, upd.FirstName, upd.LastName, dob, id)
+	_, err = stmt.ExecContext(ctx, upd.FirstName, upd.LastName, dob, upd.Email, upd.Phone, upd.Mobile, id)
 
 	return err
 }
