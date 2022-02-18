@@ -146,6 +146,10 @@ func findPersons(ctx context.Context, tx dbtx) ([]xone.Person, error) {
 			}
 		}
 
+		if err := attachMemberships(ctx, tx, &p); err != nil {
+			return nil, err
+		}
+
 		persons = append(persons, p)
 	}
 	if err := rows.Err(); err != nil {
@@ -205,6 +209,10 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 			if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
 				return xone.Person{}, false, err
 			}
+		}
+
+		if err := attachMemberships(ctx, tx, &p); err != nil {
+			return xone.Person{}, false, err
 		}
 
 		found = true
@@ -320,6 +328,16 @@ func updatePerson(ctx context.Context, tx dbtx, id string, upd xone.UpdatePerson
 	_, err = stmt.ExecContext(ctx, upd.FirstName, upd.LastName, dob, upd.Email, upd.Phone, upd.Mobile, id)
 
 	return err
+}
+
+func attachMemberships(ctx context.Context, tx dbtx, p *xone.Person) error {
+	memberships, err := findMembershipsByPerson(ctx, tx, p.PID)
+	if err != nil {
+		return err
+	}
+	p.Memberships = memberships
+
+	return nil
 }
 
 func parseDateOfBirth(s string) (time.Time, error) {

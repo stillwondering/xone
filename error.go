@@ -1,6 +1,8 @@
 package xone
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type ErrUserExists struct {
 	Data CreateUserData

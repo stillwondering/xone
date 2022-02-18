@@ -12,6 +12,7 @@ type Person struct {
 	Email       string
 	Phone       string
 	Mobile      string
+	Memberships []Membership
 }
 
 // Age calculates a person's age based on their date of birth and with respect
@@ -48,12 +49,14 @@ func (p Person) HasDateOfBirth() bool {
 // CreatePersonData contains all data which is necessary to create a new Person entry
 // in any kind of repository.
 type CreatePersonData struct {
-	FirstName   string
-	LastName    string
-	DateOfBirth time.Time
-	Email       string
-	Phone       string
-	Mobile      string
+	FirstName        string
+	LastName         string
+	DateOfBirth      time.Time
+	Email            string
+	Phone            string
+	Mobile           string
+	MembershipTypeID int
+	EffectiveFrom    time.Time
 }
 
 // UpdatePersonData contains a person's data points which can be updated.

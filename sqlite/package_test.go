@@ -63,7 +63,9 @@ func Test_PersonService_FindAll(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create() error =%v, wantErr nil", err)
 	}
-	AssertEquals(t, examplePersons[0], person)
+	if person.ID != examplePersons[0].ID {
+		t.Errorf("find() person.ID = %v, want %v", person.ID, examplePersons[0].ID)
+	}
 
 	pid1 := person.PID
 
@@ -75,7 +77,9 @@ func Test_PersonService_FindAll(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create() error =%v, wantErr nil", err)
 	}
-	AssertEquals(t, examplePersons[1], person)
+	if person.ID != examplePersons[1].ID {
+		t.Errorf("find() person.ID = %v, want %v", person.ID, examplePersons[1].ID)
+	}
 
 	pid2 := person.PID
 
@@ -100,9 +104,8 @@ func Test_PersonService_FindAll(t *testing.T) {
 	if found {
 		t.Errorf("find() found = %v, want false", found)
 	}
-	expectedPerson := xone.Person{}
-	if person != expectedPerson {
-		t.Errorf("find() person = %v, want %v", person, expectedPerson)
+	if person.ID != 0 {
+		t.Errorf("find() person.ID = %v, want %v", person.ID, 0)
 	}
 
 	person, found, err = service.Find(context.Background(), pid1)
@@ -112,18 +115,8 @@ func Test_PersonService_FindAll(t *testing.T) {
 	if !found {
 		t.Errorf("find() found = %v, want true", found)
 	}
-	expectedPerson = examplePersons[0]
-	AssertEquals(t, examplePersons[0], person)
-}
-
-func AssertEquals(t *testing.T, expected, actual xone.Person) {
-	tmp1 := expected
-	tmp1.PID = ""
-	tmp2 := actual
-	tmp2.PID = ""
-
-	if tmp1 != tmp2 {
-		t.Errorf("want %v, got %v\n", tmp1, tmp2)
+	if person.ID != examplePersons[0].ID {
+		t.Errorf("find() person.ID = %v, want %v", person.ID, examplePersons[0].ID)
 	}
 }
 
