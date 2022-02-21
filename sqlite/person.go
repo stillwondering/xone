@@ -15,13 +15,13 @@ var _ xone.PersonRepository = (*PersonService)(nil)
 
 type PersonService struct {
 	db         *sql.DB
-	generateID func() string
+	GenerateID func() string
 }
 
 func NewPersonService(db *sql.DB) *PersonService {
 	service := PersonService{
 		db: db,
-		generateID: func() string {
+		GenerateID: func() string {
 			return uuid.NewV4().String()
 		},
 	}
@@ -66,8 +66,21 @@ func (ps *PersonService) Create(ctx context.Context, data xone.CreatePersonData)
 	}
 	defer tx.Rollback()
 
-	person, err := createPerson(ctx, tx, ps.generateID(), data)
+	person, err := createPerson(ctx, tx, ps.GenerateID(), data)
 	if err != nil {
+		return xone.Person{}, err
+	}
+
+	_, err = createMembership(ctx, tx, xone.CreateMembershipData{
+		PersonID:         person.ID,
+		MembershipTypeID: data.MembershipTypeID,
+		EffectiveFrom:    data.EffectiveFrom,
+	})
+	if err != nil {
+		return xone.Person{}, err
+	}
+
+	if err := attachMemberships(ctx, tx, &person); err != nil {
 		return xone.Person{}, err
 	}
 

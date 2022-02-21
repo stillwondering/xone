@@ -3,6 +3,7 @@ package sqlite_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -10,28 +11,76 @@ import (
 	"github.com/stillwondering/xone/sqlite"
 )
 
-var examplePersons = []xone.Person{
-	{
+func Test(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	personService := sqlite.NewPersonService(db)
+	personService.GenerateID = func() string {
+		return "id"
+	}
+
+	membershipService := sqlite.NewMembershipService(db)
+
+	mt, err := membershipService.CreateMembershipType(context.Background(), "active")
+	if err != nil {
+		t.Fatalf("MembershipService.CreateMembershipType() error = %v, wantErr nil", err)
+	}
+	if !reflect.DeepEqual(mt, xone.MembershipType{ID: 1, Name: "active"}) {
+		t.Fatalf("MembershipService.CreateMembershipType() = %v, want %v", mt, xone.MembershipType{ID: 1, Name: "active"})
+	}
+
+	p, err := personService.Create(context.Background(), xone.CreatePersonData{
+		FirstName:        "Harry",
+		LastName:         "Potter",
+		DateOfBirth:      time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
+		MembershipTypeID: mt.ID,
+		EffectiveFrom:    time.Date(1998, time.July, 31, 0, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("PersonService.Create() error = %v, wantErr nil", err)
+	}
+
+	expectedPerson := xone.Person{
 		ID:          1,
-		PID:         "1",
+		PID:         "id",
 		FirstName:   "Harry",
 		LastName:    "Potter",
 		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
-	},
-	{
-		ID:          2,
-		PID:         "2",
-		FirstName:   "Ron",
-		LastName:    "Weasley",
-		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
-	},
-	{
-		ID:          3,
-		PID:         "3",
-		FirstName:   "Hermione",
-		LastName:    "Granger",
-		DateOfBirth: time.Date(1979, time.September, 19, 0, 0, 0, 0, time.UTC),
-	},
+		Memberships: []xone.Membership{
+			{
+				ID:            1,
+				Type:          mt,
+				EffectiveFrom: time.Date(1998, time.July, 31, 0, 0, 0, 0, time.UTC),
+			},
+		},
+	}
+	if !reflect.DeepEqual(expectedPerson, p) {
+		t.Fatalf("PersonService.Create() = %v, want %v", p, expectedPerson)
+	}
+
+	findPerson, found, err := personService.Find(context.Background(), expectedPerson.PID)
+	if err != nil {
+		t.Fatalf("PersonService.Find() error = %v, wantErr false", err)
+	}
+	if !found {
+		t.Fatalf("PersonService.Find() found = %v, wantFound true", found)
+	}
+	if !reflect.DeepEqual(expectedPerson, findPerson) {
+		t.Fatalf("PersonService.Create() = %v, want %v", findPerson, expectedPerson)
+	}
+
+	if err := personService.Delete(context.Background(), expectedPerson.PID); err != nil {
+		t.Fatalf("PersonService.Delete() error = %v, wantErr false", err)
+	}
+
+	_, found, err = personService.Find(context.Background(), expectedPerson.PID)
+	if err != nil {
+		t.Fatalf("PersonService.Find() error = %v, wantErr false", err)
+	}
+	if found {
+		t.Fatalf("PersonService.Find() found = %v, wantFound false", found)
+	}
 }
 
 func Test_NewPersonService(t *testing.T) {
@@ -39,85 +88,6 @@ func Test_NewPersonService(t *testing.T) {
 	defer MustCloseDB(t, db)
 
 	sqlite.NewPersonService(db)
-}
-
-func Test_PersonService_FindAll(t *testing.T) {
-	db := MustOpenDB(t)
-	defer MustCloseDB(t, db)
-
-	service := sqlite.NewPersonService(db)
-
-	persons, err := service.FindAll(context.Background())
-	if err != nil {
-		t.Errorf("findAll() error = %v, wantErr nil", err)
-	}
-	if persons != nil {
-		t.Errorf("findAll() persons = %v, want nil", persons)
-	}
-
-	person, err := service.Create(context.Background(), xone.CreatePersonData{
-		FirstName:   "Harry",
-		LastName:    "Potter",
-		DateOfBirth: time.Date(1980, time.July, 31, 0, 0, 0, 0, time.UTC),
-	})
-	if err != nil {
-		t.Errorf("Create() error =%v, wantErr nil", err)
-	}
-	if person.ID != examplePersons[0].ID {
-		t.Errorf("find() person.ID = %v, want %v", person.ID, examplePersons[0].ID)
-	}
-
-	pid1 := person.PID
-
-	person, err = service.Create(context.Background(), xone.CreatePersonData{
-		FirstName:   "Ron",
-		LastName:    "Weasley",
-		DateOfBirth: time.Date(1980, time.March, 1, 0, 0, 0, 0, time.UTC),
-	})
-	if err != nil {
-		t.Errorf("Create() error =%v, wantErr nil", err)
-	}
-	if person.ID != examplePersons[1].ID {
-		t.Errorf("find() person.ID = %v, want %v", person.ID, examplePersons[1].ID)
-	}
-
-	pid2 := person.PID
-
-	err = service.Delete(context.Background(), pid2)
-	if err != nil {
-		t.Errorf("Delete() error =%v, wantErr nil", err)
-	}
-
-	persons, err = service.FindAll(context.Background())
-	if err != nil {
-		t.Errorf("findAll() error = %v, wantErr nil", err)
-	}
-	expectedCount := 1
-	if expectedCount != len(persons) {
-		t.Errorf("findAll() want slice of size %d, got %v", expectedCount, persons)
-	}
-
-	person, found, err := service.Find(context.Background(), pid2)
-	if err != nil {
-		t.Errorf("find() error = %v, wantErr nil", err)
-	}
-	if found {
-		t.Errorf("find() found = %v, want false", found)
-	}
-	if person.ID != 0 {
-		t.Errorf("find() person.ID = %v, want %v", person.ID, 0)
-	}
-
-	person, found, err = service.Find(context.Background(), pid1)
-	if err != nil {
-		t.Errorf("find() error = %v, wantErr nil", err)
-	}
-	if !found {
-		t.Errorf("find() found = %v, want true", found)
-	}
-	if person.ID != examplePersons[0].ID {
-		t.Errorf("find() person.ID = %v, want %v", person.ID, examplePersons[0].ID)
-	}
 }
 
 func Test_NewUserService(t *testing.T) {
