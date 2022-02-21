@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -30,7 +31,7 @@ func Open(dsn string) (*sql.DB, error) {
 		return nil, errors.New("DSN required")
 	}
 
-	if dsn != ":memory:" {
+	if !strings.Contains(dsn, ":memory:") {
 		if err := os.MkdirAll(filepath.Dir(dsn), 0700); err != nil {
 			return nil, err
 		}

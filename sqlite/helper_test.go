@@ -3,7 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"io/ioutil"
-	"os"
 	"testing"
 )
 
@@ -13,17 +12,7 @@ import (
 func mustOpenDB(t *testing.T) *sql.DB {
 	t.Helper()
 
-	f, err := ioutil.TempFile("", "test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.Close()
-
-	t.Cleanup(func() {
-		os.RemoveAll(f.Name())
-	})
-
-	db, err := Open(f.Name())
+	db, err := Open("file::memory:?cache=shared")
 	if err != nil {
 		t.Fatal(err)
 	}
