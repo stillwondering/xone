@@ -257,3 +257,50 @@ func Test_createMembership(t *testing.T) {
 		})
 	}
 }
+
+func Test_createMembershipType(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    xone.MembershipType
+		wantErr bool
+	}{
+		{
+			name: "Already existing membership type",
+			args: args{
+				name: "active",
+			},
+			want:    xone.MembershipType{},
+			wantErr: true,
+		},
+		{
+			name: "New membership type",
+			args: args{
+				name: "passive",
+			},
+			want: xone.MembershipType{
+				ID:   2,
+				Name: "passive",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := mustOpenDB(t)
+			mustMigrateFile(t, db, "testdata/Test_createMembershipType.sql")
+
+			got, err := createMembershipType(context.Background(), db, tt.args.name)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("createMembershipType() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("createMembershipType() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -25,6 +25,21 @@ func (s *MembershipService) FindAllMembershipTypes(ctx context.Context) ([]xone.
 	return findAllMembershipTypes(ctx, s.db)
 }
 
+func (s *MembershipService) CreateMembershipType(ctx context.Context, name string) (xone.MembershipType, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return xone.MembershipType{}, err
+	}
+	defer tx.Rollback()
+
+	membershipType, err := createMembershipType(ctx, tx, name)
+	if err != nil {
+		return xone.MembershipType{}, err
+	}
+
+	return membershipType, tx.Commit()
+}
+
 func findAllMembershipTypes(ctx context.Context, db dbtx) ([]xone.MembershipType, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT
@@ -53,6 +68,28 @@ func findAllMembershipTypes(ctx context.Context, db dbtx) ([]xone.MembershipType
 	}
 
 	return membershipTypes, nil
+}
+
+func createMembershipType(ctx context.Context, db dbtx, name string) (xone.MembershipType, error) {
+	stmt, err := db.PrepareContext(ctx, `INSERT INTO membership_type (name) VALUES (?)`)
+	if err != nil {
+		return xone.MembershipType{}, err
+	}
+
+	res, err := stmt.ExecContext(ctx, name)
+	if err != nil {
+		return xone.MembershipType{}, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return xone.MembershipType{}, err
+	}
+
+	return xone.MembershipType{
+		ID:   int(id),
+		Name: name,
+	}, nil
 }
 
 func findMembershipsByPerson(ctx context.Context, db dbtx, pid string) ([]xone.Membership, error) {
