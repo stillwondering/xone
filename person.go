@@ -52,6 +52,35 @@ func (p Person) HasDateOfBirth() bool {
 	return !p.DateOfBirth.IsZero()
 }
 
+func (p Person) CurrentMembership() *Membership {
+	return p.Membership(time.Now())
+}
+
+func (p Person) Membership(today time.Time) *Membership {
+	if len(p.Memberships) == 0 {
+		return nil
+	}
+
+	m := p.Memberships[0]
+
+	for i := 1; i < len(p.Memberships); i++ {
+		if p.Memberships[i].EffectiveFrom.IsZero() {
+			m = p.Memberships[i]
+			continue
+		}
+
+		if p.Memberships[i].EffectiveFrom.After(today) {
+			continue
+		}
+
+		if p.Memberships[i].EffectiveFrom.After(m.EffectiveFrom) {
+			m = p.Memberships[i]
+		}
+	}
+
+	return &m
+}
+
 // CreatePersonData contains all data which is necessary to create a new Person entry
 // in any kind of repository.
 type CreatePersonData struct {
