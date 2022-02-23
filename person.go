@@ -1,6 +1,8 @@
 package xone
 
-import "time"
+import (
+	"time"
+)
 
 // Person contains the personal data of a organization member.
 type Person struct {
@@ -13,6 +15,10 @@ type Person struct {
 	Phone       string
 	Mobile      string
 	Memberships []Membership
+}
+
+func (p Person) CurrentAge() int {
+	return p.Age(time.Now())
 }
 
 // Age calculates a person's age based on their date of birth and with respect
