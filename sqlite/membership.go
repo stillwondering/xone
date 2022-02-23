@@ -9,6 +9,8 @@ import (
 	"github.com/stillwondering/xone"
 )
 
+const formatDate = "2006-01-02"
+
 type MembershipService struct {
 	db *sql.DB
 }
@@ -129,7 +131,7 @@ func findMembershipsByPerson(ctx context.Context, db dbtx, pid string) ([]xone.M
 			return nil, err
 		}
 
-		membership.EffectiveFrom, err = time.Parse("2006-01-02", effectiveFromText)
+		membership.EffectiveFrom, err = time.Parse(formatDate, effectiveFromText)
 		if err != nil {
 			return nil, err
 		}
@@ -176,7 +178,7 @@ func findMembership(ctx context.Context, db dbtx, id int) (xone.Membership, bool
 	}
 
 	if effectiveFromText != "" {
-		membership.EffectiveFrom, err = time.Parse("2006-01-02", effectiveFromText)
+		membership.EffectiveFrom, err = time.Parse(formatDate, effectiveFromText)
 		if err != nil {
 			return xone.Membership{}, true, err
 		}
@@ -203,7 +205,7 @@ func createMembership(ctx context.Context, db dbtx, data xone.CreateMembershipDa
 
 	effectiveFrom := ""
 	if !data.EffectiveFrom.IsZero() {
-		effectiveFrom = data.EffectiveFrom.Format("2006-01-02")
+		effectiveFrom = data.EffectiveFrom.Format(formatDate)
 	}
 
 	res, err := stmt.ExecContext(ctx, data.PersonID, data.MembershipTypeID, effectiveFrom)
