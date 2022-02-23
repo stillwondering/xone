@@ -222,6 +222,24 @@ func Test_createMembership(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Valid data with no effective from date",
+			args: args{
+				data: xone.CreateMembershipData{
+					PersonID:         3,
+					MembershipTypeID: 1,
+				},
+			},
+			want: xone.Membership{
+				ID: 3,
+				Type: xone.MembershipType{
+					ID:   1,
+					Name: "active",
+				},
+				EffectiveFrom: time.Time{},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Creating additional membership",
 			args: args{
 				data: xone.CreateMembershipData{

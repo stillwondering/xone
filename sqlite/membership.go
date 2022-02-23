@@ -175,9 +175,11 @@ func findMembership(ctx context.Context, db dbtx, id int) (xone.Membership, bool
 		return xone.Membership{}, false, err
 	}
 
-	membership.EffectiveFrom, err = time.Parse("2006-01-02", effectiveFromText)
-	if err != nil {
-		return xone.Membership{}, true, err
+	if effectiveFromText != "" {
+		membership.EffectiveFrom, err = time.Parse("2006-01-02", effectiveFromText)
+		if err != nil {
+			return xone.Membership{}, true, err
+		}
 	}
 
 	return membership, true, nil
@@ -199,7 +201,12 @@ func createMembership(ctx context.Context, db dbtx, data xone.CreateMembershipDa
 		return xone.Membership{}, err
 	}
 
-	res, err := stmt.ExecContext(ctx, data.PersonID, data.MembershipTypeID, data.EffectiveFrom.Format("2006-01-02"))
+	effectiveFrom := ""
+	if !data.EffectiveFrom.IsZero() {
+		effectiveFrom = data.EffectiveFrom.Format("2006-01-02")
+	}
+
+	res, err := stmt.ExecContext(ctx, data.PersonID, data.MembershipTypeID, effectiveFrom)
 	if err != nil {
 		return xone.Membership{}, err
 	}
