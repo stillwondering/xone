@@ -322,3 +322,68 @@ func Test_createMembershipType(t *testing.T) {
 		})
 	}
 }
+
+func Test_updateMembership(t *testing.T) {
+	type args struct {
+		id   int
+		data xone.UpdateMembershipData
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Nonexistent membership",
+			args: args{
+				id: 123,
+				data: xone.UpdateMembershipData{
+					MembershipTypeID: 1,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Nonexistent membership type",
+			args: args{
+				id: 1,
+				data: xone.UpdateMembershipData{
+					MembershipTypeID: 123,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Update membership",
+			args: args{
+				id: 2,
+				data: xone.UpdateMembershipData{
+					MembershipTypeID: 1,
+					EffectiveFrom:    time.Time{},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "No op",
+			args: args{
+				id: 1,
+				data: xone.UpdateMembershipData{
+					MembershipTypeID: 1,
+					EffectiveFrom:    time.Date(1998, time.July, 31, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := mustOpenDB(t)
+			mustMigrateFile(t, db, "testdata/Test_updateMembership.sql")
+
+			if err := updateMembership(context.Background(), db, tt.args.id, tt.args.data); (err != nil) != tt.wantErr {
+				t.Errorf("updateMembership() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

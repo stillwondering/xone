@@ -42,6 +42,20 @@ func (s *MembershipService) CreateMembershipType(ctx context.Context, name strin
 	return membershipType, tx.Commit()
 }
 
+func (s *MembershipService) UpdateMembership(ctx context.Context, id int, data xone.UpdateMembershipData) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if err := updateMembership(ctx, tx, id, data); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func findAllMembershipTypes(ctx context.Context, db dbtx) ([]xone.MembershipType, error) {
 	rows, err := db.QueryContext(ctx, `
 		SELECT
@@ -224,4 +238,37 @@ func createMembership(ctx context.Context, db dbtx, data xone.CreateMembershipDa
 	}
 
 	return membership, nil
+}
+
+func updateMembership(ctx context.Context, db dbtx, id int, data xone.UpdateMembershipData) error {
+	stmt, err := db.PrepareContext(ctx, `
+		UPDATE
+			membership
+		SET
+			type_id = ?,
+			effective_from = ?
+		WHERE
+			id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	effectiveFrom := ""
+	if !data.EffectiveFrom.IsZero() {
+		effectiveFrom = data.EffectiveFrom.Format(formatDate)
+	}
+
+	res, err := stmt.ExecContext(ctx, data.MembershipTypeID, effectiveFrom, id)
+	if err != nil {
+		return err
+	}
+
+	if rows, err := res.RowsAffected(); err != nil {
+		return err
+	} else if int(rows) != 1 {
+		return errors.New("membership not found")
+	}
+
+	return nil
 }
