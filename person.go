@@ -14,6 +14,10 @@ type Person struct {
 	Email       string
 	Phone       string
 	Mobile      string
+	Street      string
+	HouseNumber string
+	ZipCode     string
+	City        string
 	Memberships []Membership
 }
 
@@ -90,6 +94,10 @@ type CreatePersonData struct {
 	Email            string
 	Phone            string
 	Mobile           string
+	Street           string
+	HouseNumber      string
+	ZipCode          string
+	City             string
 	MembershipTypeID int
 	EffectiveFrom    time.Time
 }
@@ -102,6 +110,10 @@ type UpdatePersonData struct {
 	Email       string
 	Phone       string
 	Mobile      string
+	Street      string
+	HouseNumber string
+	ZipCode     string
+	City        string
 }
 
 // ToUpdateData returns a struct that can be used as a starting point when
@@ -114,5 +126,9 @@ func (p Person) ToUpdateData() UpdatePersonData {
 		Email:       p.Email,
 		Phone:       p.Phone,
 		Mobile:      p.Mobile,
+		Street:      p.Street,
+		HouseNumber: p.HouseNumber,
+		ZipCode:     p.ZipCode,
+		City:        p.City,
 	}
 }

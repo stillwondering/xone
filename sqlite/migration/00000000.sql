@@ -6,7 +6,11 @@ CREATE TABLE `person` (
     `date_of_birth` TEXT NOT NULL,
     `email` TEXT DEFAULT '',
     `phone` TEXT DEFAULT '',
-    `mobile` TEXT DEFAULT ''
+    `mobile` TEXT DEFAULT '',
+    `street` TEXT DEFAULT '',
+    `house_number` TEXT DEFAULT '',
+    `zip_code` TEXT DEFAULT '',
+    `city` TEXT DEFAULT ''
 );
 
 CREATE TABLE `person_history` (
@@ -19,7 +23,11 @@ CREATE TABLE `person_history` (
     `date_of_birth` TEXT NOT NULL,
     `email` TEXT DEFAULT '',
     `phone` TEXT DEFAULT '',
-    `mobile` TEXT DEFAULT ''
+    `mobile` TEXT DEFAULT '',
+    `street` TEXT DEFAULT '',
+    `house_number` TEXT DEFAULT '',
+    `zip_code` TEXT DEFAULT '',
+    `city` TEXT DEFAULT ''
 );
 
 CREATE TRIGGER update_history_after_insert_person
@@ -34,7 +42,11 @@ BEGIN
         date_of_birth,
         email,
         phone,
-        mobile
+        mobile,
+        street,
+        house_number,
+        zip_code,
+        city
     ) VALUES (
         datetime(),
         NEW.id,
@@ -44,7 +56,11 @@ BEGIN
         NEW.date_of_birth,
         NEW.email,
         NEW.phone,
-        NEW.mobile
+        NEW.mobile,
+        NEW.street,
+        NEW.house_number,
+        NEW.zip_code,
+        NEW.city
     );
 END;
 
@@ -60,7 +76,11 @@ BEGIN
         date_of_birth,
         email,
         phone,
-        mobile
+        mobile,
+        street,
+        house_number,
+        zip_code,
+        city
     ) VALUES (
         datetime(),
         NEW.id,
@@ -70,7 +90,11 @@ BEGIN
         NEW.date_of_birth,
         NEW.email,
         NEW.phone,
-        NEW.mobile
+        NEW.mobile,
+        NEW.street,
+        NEW.house_number,
+        NEW.zip_code,
+        NEW.city
     );
 END;
 
