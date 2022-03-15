@@ -203,54 +203,46 @@ func findPerson(ctx context.Context, tx dbtx, pid string) (xone.Person, bool, er
 		return xone.Person{}, false, err
 	}
 
-	rows, err := stmt.QueryContext(ctx, pid)
-	if err != nil {
-		return xone.Person{}, false, err
-	}
-	defer rows.Close()
+	row := stmt.QueryRowContext(ctx, pid)
 
 	p := xone.Person{}
-	found := false
-	for rows.Next() {
-		var id int
-		var firstName, lastName, dobString, email, phone, mobile, street, houseNumber, zipCode, city string
+	var id int
+	var firstName, lastName, dobString, email, phone, mobile, street, houseNumber, zipCode, city string
 
-		if err := rows.Scan(&id, &firstName, &lastName, &dobString, &email, &phone, &mobile, &street, &houseNumber, &zipCode, &city); err != nil {
-			return xone.Person{}, false, err
+	if err := row.Scan(&id, &firstName, &lastName, &dobString, &email, &phone, &mobile, &street, &houseNumber, &zipCode, &city); err != nil {
+		if err == sql.ErrNoRows {
+			return xone.Person{}, false, nil
 		}
 
-		p = xone.Person{
-			ID:          id,
-			PID:         pid,
-			FirstName:   firstName,
-			LastName:    lastName,
-			DateOfBirth: time.Time{},
-			Email:       email,
-			Phone:       phone,
-			Mobile:      mobile,
-			Street:      street,
-			HouseNumber: houseNumber,
-			ZipCode:     zipCode,
-			City:        city,
-		}
-
-		if dobString != "" {
-			if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
-				return xone.Person{}, false, err
-			}
-		}
-
-		if err := attachMemberships(ctx, tx, &p); err != nil {
-			return xone.Person{}, false, err
-		}
-
-		found = true
-	}
-	if err := rows.Err(); err != nil {
 		return xone.Person{}, false, err
 	}
 
-	return p, found, nil
+	p = xone.Person{
+		ID:          id,
+		PID:         pid,
+		FirstName:   firstName,
+		LastName:    lastName,
+		DateOfBirth: time.Time{},
+		Email:       email,
+		Phone:       phone,
+		Mobile:      mobile,
+		Street:      street,
+		HouseNumber: houseNumber,
+		ZipCode:     zipCode,
+		City:        city,
+	}
+
+	if dobString != "" {
+		if p.DateOfBirth, err = parseDateOfBirth(dobString); err != nil {
+			return xone.Person{}, true, err
+		}
+	}
+
+	if err := attachMemberships(ctx, tx, &p); err != nil {
+		return xone.Person{}, true, err
+	}
+
+	return p, true, nil
 }
 
 func createPerson(ctx context.Context, tx dbtx, pid string, data xone.CreatePersonData) (xone.Person, error) {
